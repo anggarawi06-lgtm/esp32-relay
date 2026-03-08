@@ -1,121 +1,220 @@
 <!DOCTYPE html>
 
 <html>
+
 <head>
 
-<title>IoT Smart Doorlock</title>
-
-<link rel="stylesheet" href="style.css">
+<title>IoT Smart Panel</title>
 
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<style>
+
+body{
+font-family:Arial;
+background:#ddd;
+}
+
+.container{
+width:1200px;
+margin:auto;
+}
+
+.box{
+border:2px solid black;
+padding:10px;
+margin:10px;
+background:white;
+}
+
+button{
+padding:10px;
+margin:3px;
+}
+
+.on{
+background:lime;
+}
+
+.off{
+background:red;
+}
+
+.row{
+display:flex;
+}
+
+.col{
+flex:1;
+margin:5px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div class="sidebar">
+<div class="container">
 
-<h2>IoT Panel</h2>
+<h2>Smart IoT Dashboard</h2>
 
-<button onclick="showPage('dashboard')">Dashboard</button> <button onclick="showPage('rfid')">RFID Access</button> <button onclick="showPage('password')">Change Password</button>
+<div class="row">
 
+<div class="box">
+Lampu 1<br>
+<button class="on" onclick="lamp(1,'ON')">ON</button>
+<button class="off" onclick="lamp(1,'OFF')">OFF</button>
 </div>
 
-<div class="main">
-
-<div id="dashboard" class="page">
-
-<h2>Dashboard</h2>
-
-<div class="cards">
-
-<div class="card">
-<h3>RFID Status</h3>
-<div id="rfidStatus">-</div>
+<div class="box">
+Lampu 2<br>
+<button class="on" onclick="lamp(2,'ON')">ON</button>
+<button class="off" onclick="lamp(2,'OFF')">OFF</button>
 </div>
 
-<div class="card">
-<h3>Suhu</h3>
-<div id="temp">-</div>
+<div class="box">
+Lampu 3<br>
+<button class="on" onclick="lamp(3,'ON')">ON</button>
+<button class="off" onclick="lamp(3,'OFF')">OFF</button>
 </div>
 
-<div class="card">
-<h3>Kelembapan</h3>
-<div id="hum">-</div>
-</div>
-
-<div class="card">
-<h3>Kelembapan Tanah</h3>
-<div id="soil">-</div>
+<div class="box">
+Lampu 4<br>
+<button class="on" onclick="lamp(4,'ON')">ON</button>
+<button class="off" onclick="lamp(4,'OFF')">OFF</button>
 </div>
 
 </div>
 
-<button onclick="openDoor()">Manual Open Door</button>
+<div class="row">
 
-<div class="charts">
+<div class="box col">
+<h3>Pembacaan Suhu dan Kelembapan</h3>
+Temp : <span id="temp">0</span><br>
+Hum : <span id="hum">0</span>
+</div>
 
-<canvas id="tempChart"></canvas> <canvas id="soilChart"></canvas>
-
+<div class="box col">
+<h3>Grafik suhu dan kelembapan</h3>
+<canvas id="chart1"></canvas>
 </div>
 
 </div>
 
-<div id="rfid" class="page">
+<div class="row">
 
-<h2>RFID Access Manager</h2>
-
-<input id="uidInput" placeholder="UID kartu">
-
-<button onclick="addCard()">Tambah</button>
-
-<table>
-
-<thead>
-<tr>
-<th>UID</th>
-<th>Aksi</th>
-</tr>
-</thead>
-
-<tbody id="cardList"></tbody>
-
-</table>
-
-<h3>History Scan</h3>
-
-<table>
-
-<thead>
-<tr>
-<th>UID</th>
-<th>Status</th>
-<th>Waktu</th>
-</tr>
-</thead>
-
-<tbody id="history"></tbody>
-
-</table>
-
+<div class="box col">
+<h3>Kelembapan tanah</h3>
+<span id="soil">0</span>
 </div>
 
-<div id="password" class="page">
-
-<h2>Change Login</h2>
-
-<input id="newUser" placeholder="username baru">
-<input id="newPass" placeholder="password baru">
-
-<button onclick="changeLogin()">Save</button>
-
+<div class="box col">
+<h3>Grafik kelembapan tanah</h3>
+<canvas id="chart2"></canvas>
 </div>
 
 </div>
 
-<script src="app.js"></script>
+<div class="row">
+
+<div class="box col">
+<h3>RFID Access</h3>
+UID : <span id="uid"></span>
+</div>
+
+<div class="box col">
+<h3>Manual Doorlock</h3>
+<button onclick="door()">OPEN DOOR</button>
+</div>
+
+</div>
+
+<div class="box">
+<h3>History Akses</h3>
+<ul id="history"></ul>
+</div>
+
+</div>
+
+<script>
+
+const client=mqtt.connect(
+'wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt',
+{
+username:"hivemq.webclient.1772948203432",
+password:"?d6OcSIy38T@0;ojDV,u"
+}
+)
+
+client.on("connect",()=>{
+
+client.subscribe("esp32/sensor")
+client.subscribe("esp32/rfid/scan")
+
+})
+
+let chart1=new Chart(document.getElementById("chart1"),{
+type:"line",
+data:{labels:[],datasets:[{label:"Temp",data:[]},{label:"Hum",data:[]}]}
+})
+
+let chart2=new Chart(document.getElementById("chart2"),{
+type:"line",
+data:{labels:[],datasets:[{label:"Soil",data:[]}]}
+})
+
+client.on("message",(topic,message)=>{
+
+if(topic=="esp32/sensor"){
+
+let data=JSON.parse(message)
+
+document.getElementById("temp").innerText=data.temp
+document.getElementById("hum").innerText=data.hum
+document.getElementById("soil").innerText=data.soil
+
+let t=new Date().toLocaleTimeString()
+
+chart1.data.labels.push(t)
+chart1.data.datasets[0].data.push(data.temp)
+chart1.data.datasets[1].data.push(data.hum)
+
+chart2.data.labels.push(t)
+chart2.data.datasets[0].data.push(data.soil)
+
+chart1.update()
+chart2.update()
+
+}
+
+if(topic=="esp32/rfid/scan"){
+
+let uid=message.toString()
+
+document.getElementById("uid").innerText=uid
+
+let li=document.createElement("li")
+li.innerText=uid+" - "+new Date().toLocaleTimeString()
+
+document.getElementById("history").appendChild(li)
+
+}
+
+})
+
+function door(){
+client.publish("esp32/doorlock","OPEN")
+}
+
+function lamp(n,state){
+client.publish("esp32/lamp"+n,state)
+}
+
+</script>
 
 </body>
+
 </html>
