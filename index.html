@@ -1,15 +1,70 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>ESP32 Relay Control</title>
+
+<title>ESP32 IoT Dashboard</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f2f2;
+text-align:center;
+}
+
+.card{
+background:white;
+padding:20px;
+margin:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+display:inline-block;
+width:200px;
+}
+
+button{
+width:120px;
+height:50px;
+font-size:18px;
+margin:10px;
+}
+
+</style>
+
 </head>
 
-<body style="text-align:center;font-family:Arial">
+<body>
 
-<h2>Kontrol Relay ESP32</h2>
+<h1>ESP32 Smart Dashboard</h1>
 
-<button onclick="relayOn()" style="width:120px;height:50px;font-size:18px">ON</button>
-<button onclick="relayOff()" style="width:120px;height:50px;font-size:18px">OFF</button>
+<div class="card">
+<h3>Suhu</h3>
+<p id="suhu">-- °C</p>
+</div>
+
+<div class="card">
+<h3>Kelembapan</h3>
+<p id="hum">-- %</p>
+</div>
+
+<div class="card">
+<h3>Kelembapan Tanah</h3>
+<p id="soil">--</p>
+</div>
+
+<div class="card">
+<h3>RFID Terakhir</h3>
+<p id="rfid">--</p>
+</div>
+
+<div class="card">
+<h3>Kontrol Relay</h3>
+
+<button onclick="relayOn()">ON</button>
+<button onclick="relayOff()">OFF</button>
+
+</div>
 
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
@@ -18,20 +73,54 @@
 const client = mqtt.connect(
 "wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt",
 {
-username: "hivemq.webclient.1772948203432",
-password: "?d6OcSIy38T@0;ojDV,u"
-})
+username:"hivemq.webclient.1772948203432",
+password:"?d6OcSIy38T@0;ojDV,u"
+}
+)
 
 client.on("connect", function () {
+
 console.log("MQTT Connected")
+
+client.subscribe("rumah/suhu")
+client.subscribe("rumah/kelembapan")
+client.subscribe("rumah/tanah")
+client.subscribe("rumah/rfid")
+
+})
+
+client.on("message", function(topic,message){
+
+let data = message.toString()
+
+if(topic=="rumah/suhu"){
+document.getElementById("suhu").innerHTML=data+" °C"
+}
+
+if(topic=="rumah/kelembapan"){
+document.getElementById("hum").innerHTML=data+" %"
+}
+
+if(topic=="rumah/tanah"){
+document.getElementById("soil").innerHTML=data
+}
+
+if(topic=="rumah/rfid"){
+document.getElementById("rfid").innerHTML=data
+}
+
 })
 
 function relayOn(){
+
 client.publish("rumah/lampu","ON")
+
 }
 
 function relayOff(){
+
 client.publish("rumah/lampu","OFF")
+
 }
 
 </script>
