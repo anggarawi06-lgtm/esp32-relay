@@ -1,82 +1,121 @@
 <!DOCTYPE html>
 
 <html>
-
 <head>
 
-<title>IoT Doorlock Login</title>
+<title>IoT Smart Doorlock</title>
 
-<style>
+<link rel="stylesheet" href="style.css">
 
-body{
-font-family:Arial;
-background:#1f2937;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
-.box{
-background:white;
-padding:40px;
-border-radius:10px;
-width:300px;
-}
-
-input{
-width:100%;
-padding:10px;
-margin:10px 0;
-}
-
-button{
-width:100%;
-padding:10px;
-}
-
-</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
 <body>
 
-<div class="box">
+<div class="sidebar">
 
-<h2>Login Dashboard</h2>
+<h2>IoT Panel</h2>
 
-<input id="user" placeholder="username">
-<input id="pass" type="password" placeholder="password">
-
-<button onclick="login()">Login</button>
+<button onclick="showPage('dashboard')">Dashboard</button> <button onclick="showPage('rfid')">RFID Access</button> <button onclick="showPage('password')">Change Password</button>
 
 </div>
 
-<script>
+<div class="main">
 
-function login(){
+<div id="dashboard" class="page">
 
-let u=document.getElementById("user").value
-let p=document.getElementById("pass").value
+<h2>Dashboard</h2>
 
-if(u=="admin" && p=="1234"){
+<div class="cards">
 
-localStorage.setItem("login","true")
+<div class="card">
+<h3>RFID Status</h3>
+<div id="rfidStatus">-</div>
+</div>
 
-window.location="dashboard.html"
+<div class="card">
+<h3>Suhu</h3>
+<div id="temp">-</div>
+</div>
 
-}
+<div class="card">
+<h3>Kelembapan</h3>
+<div id="hum">-</div>
+</div>
 
-else{
+<div class="card">
+<h3>Kelembapan Tanah</h3>
+<div id="soil">-</div>
+</div>
 
-alert("Login gagal")
+</div>
 
-}
+<button onclick="openDoor()">Manual Open Door</button>
 
-}
+<div class="charts">
 
-</script>
+<canvas id="tempChart"></canvas> <canvas id="soilChart"></canvas>
+
+</div>
+
+</div>
+
+<div id="rfid" class="page">
+
+<h2>RFID Access Manager</h2>
+
+<input id="uidInput" placeholder="UID kartu">
+
+<button onclick="addCard()">Tambah</button>
+
+<table>
+
+<thead>
+<tr>
+<th>UID</th>
+<th>Aksi</th>
+</tr>
+</thead>
+
+<tbody id="cardList"></tbody>
+
+</table>
+
+<h3>History Scan</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>UID</th>
+<th>Status</th>
+<th>Waktu</th>
+</tr>
+</thead>
+
+<tbody id="history"></tbody>
+
+</table>
+
+</div>
+
+<div id="password" class="page">
+
+<h2>Change Login</h2>
+
+<input id="newUser" placeholder="username baru">
+<input id="newPass" placeholder="password baru">
+
+<button onclick="changeLogin()">Save</button>
+
+</div>
+
+</div>
+
+<script src="app.js"></script>
 
 </body>
-
 </html>
