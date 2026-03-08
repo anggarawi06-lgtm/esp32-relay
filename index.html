@@ -4,37 +4,35 @@
 
 <head>
 
-<title>ESP32 IoT Dashboard</title>
-
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<title>IoT Doorlock Login</title>
 
 <style>
 
 body{
 font-family:Arial;
-background:#111;
-color:white;
-text-align:center;
+background:#1f2937;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
-.card{
-background:#1e1e1e;
-margin:15px;
-padding:20px;
+.box{
+background:white;
+padding:40px;
 border-radius:10px;
-display:inline-block;
-width:200px;
+width:300px;
 }
 
-.value{
-font-size:28px;
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
 }
 
 button{
-width:100px;
-height:40px;
-margin:5px;
-font-size:16px;
+width:100%;
+padding:10px;
 }
 
 </style>
@@ -43,83 +41,38 @@ font-size:16px;
 
 <body>
 
-<h1>ESP32 IoT Dashboard</h1>
+<div class="box">
 
-<div class="card">
-<h3>Suhu</h3>
-<div id="suhu" class="value">--</div>
-</div>
+<h2>Login Dashboard</h2>
 
-<div class="card">
-<h3>Kelembapan</h3>
-<div id="hum" class="value">--</div>
-</div>
+<input id="user" placeholder="username">
+<input id="pass" type="password" placeholder="password">
 
-<div class="card">
-<h3>Kelembapan Tanah</h3>
-<div id="soil" class="value">--</div>
-</div>
-
-<div class="card">
-<h3>RFID</h3>
-<div id="rfid" class="value">--</div>
-</div>
-
-<div class="card">
-
-<h3>Relay</h3>
-
-<button onclick="relayOn()">ON</button> <button onclick="relayOff()">OFF</button>
+<button onclick="login()">Login</button>
 
 </div>
 
 <script>
 
-const client = mqtt.connect(
-"wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt",
-{
-username:"hivemq.webclient.1772948203432",
-password:"?d6OcSIy38T@0;ojDV,u"
-}
-)
+function login(){
 
-client.on("connect",function(){
+let u=document.getElementById("user").value
+let p=document.getElementById("pass").value
 
-client.subscribe("rumah/suhu")
-client.subscribe("rumah/kelembapan")
-client.subscribe("rumah/tanah")
-client.subscribe("rumah/rfid")
+if(u=="admin" && p=="1234"){
 
-})
+localStorage.setItem("login","true")
 
-client.on("message",function(topic,message){
+window.location="dashboard.html"
 
-let data=message.toString()
-
-if(topic=="rumah/suhu"){
-document.getElementById("suhu").innerHTML=data+" °C"
 }
 
-if(topic=="rumah/kelembapan"){
-document.getElementById("hum").innerHTML=data+" %"
+else{
+
+alert("Login gagal")
+
 }
 
-if(topic=="rumah/tanah"){
-document.getElementById("soil").innerHTML=data
-}
-
-if(topic=="rumah/rfid"){
-document.getElementById("rfid").innerHTML=data
-}
-
-})
-
-function relayOn(){
-client.publish("rumah/lampu","ON")
-}
-
-function relayOff(){
-client.publish("rumah/lampu","OFF")
 }
 
 </script>
