@@ -377,6 +377,9 @@
             <button class="btn btn-primary" onclick="requestStatus()">
                 🔄 Sync Status
             </button>
+            <button class="btn btn-primary" onclick="clearAllData()" style="background: #ef4444;">
+                🗑️ Clear Data
+            </button>
         </div>
 
         <!-- Lamp Control Cards -->
@@ -563,6 +566,10 @@
             4: false
         };
 
+        // ==================== DATA GRAFIK DENGAN LOCALSTORAGE ====================
+        const CHART_KEY = 'sensor_chart_data';
+        const MAX_CHART_POINTS = 100; // Batasi di UI
+        
         // Data untuk charts
         let sensorData = {
             timestamps: [],
@@ -571,51 +578,98 @@
             soil: []
         };
 
-        // ==================== FUNGSI HISTORY DENGAN LOCALSTORAGE ====================
-        const HISTORY_KEY = 'rfid_history';
-        const MAX_HISTORY = 20; // Maksimal 20 item di history
-
-        // Fungsi untuk load history dari localStorage
-        function loadHistoryFromStorage() {
+        // Fungsi untuk menyimpan data grafik ke localStorage
+        function saveChartToStorage() {
             try {
-                const saved = localStorage.getItem(HISTORY_KEY);
-                if (saved) {
-                    const history = JSON.parse(saved);
-                    const historyList = document.getElementById('historyList');
-                    historyList.innerHTML = ''; // Kosongkan dulu
-                    
-                    // Hitung 48 jam yang lalu
-                    const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
-                    
-                    // Filter history yang masih dalam 48 jam
-                    const validHistory = history.filter(item => item.timestamp >= fortyEightHoursAgo);
-                    
-                    // Tampilkan ke UI (dari yang terbaru)
-                    validHistory.reverse().forEach(item => {
-                        addHistoryItemToUI(item.uid, item.timeStr, false);
-                    });
-                    
-                    console.log(`📂 Loaded ${validHistory.length} history items from storage`);
-                    
-                    // Simpan kembali yang sudah difilter
-                    saveHistoryToStorage(validHistory);
-                }
+                // Hitung 48 jam yang lalu
+                const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+                
+                // Filter data yang masih dalam 48 jam
+                const validData = {
+                    timestamps: [],
+                    temp: [],
+                    hum: [],
+                    soil: []
+                };
+                
+                // Asumsikan kita menyimpan timestamp asli juga (perlu ditambahkan)
+                // Untuk sekarang, kita simpan semua data
+                const dataToSave = {
+                    timestamps: sensorData.timestamps,
+                    temp: sensorData.temp,
+                    hum: sensorData.hum,
+                    soil: sensorData.soil,
+                    savedAt: Date.now()
+                };
+                
+                localStorage.setItem(CHART_KEY, JSON.stringify(dataToSave));
+                console.log('💾 Chart data saved:', sensorData.timestamps.length, 'points');
             } catch (e) {
-                console.error('Error loading history:', e);
+                console.error('Error saving chart:', e);
             }
         }
 
-        // Fungsi untuk save history ke localStorage
-        function saveHistoryToStorage(history) {
+        // Fungsi untuk memuat data grafik dari localStorage
+        function loadChartFromStorage() {
             try {
-                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                const saved = localStorage.getItem(CHART_KEY);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    
+                    // Validasi data
+                    if (data.timestamps && data.temp && data.hum && data.soil) {
+                        sensorData.timestamps = data.timestamps || [];
+                        sensorData.temp = data.temp || [];
+                        sensorData.hum = data.hum || [];
+                        sensorData.soil = data.soil || [];
+                        
+                        console.log('📊 Loaded chart data:', sensorData.timestamps.length, 'points');
+                        
+                        // Update charts
+                        updateCharts();
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading chart:', e);
+            }
+            return false;
+        }
+
+        // Fungsi untuk membersihkan semua data
+        function clearAllData() {
+            if (confirm('Hapus semua history dan data grafik?')) {
+                localStorage.removeItem(HISTORY_KEY);
+                localStorage.removeItem(CHART_KEY);
+                
+                // Reset data
+                sensorData = {
+                    timestamps: [],
+                    temp: [],
+                    hum: [],
+                    soil: []
+                };
+                
+                document.getElementById('historyList').innerHTML = '';
+                updateCharts();
+                
+                console.log('🗑️ All data cleared');
+            }
+        }
+
+        // ==================== FUNGSI HISTORY DENGAN LOCALSTORAGE ====================
+        const HISTORY_KEY = 'rfid_history_data';
+        const MAX_HISTORY = 20;
+
+        function saveHistoryToStorage(historyArray) {
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
             } catch (e) {
                 console.error('Error saving history:', e);
             }
         }
 
-        // Fungsi untuk mendapatkan semua history
-        function getAllHistory() {
+        function getHistoryFromStorage() {
             try {
                 const saved = localStorage.getItem(HISTORY_KEY);
                 return saved ? JSON.parse(saved) : [];
@@ -624,69 +678,86 @@
             }
         }
 
-        // Fungsi untuk menambah history baru
-        function addHistoryItem(uid) {
-            const now = Date.now();
-            const timeStr = new Date().toLocaleTimeString();
+        function displayHistoryToUI(historyArray) {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
             
-            // Ambil history yang ada
-            let history = getAllHistory();
+            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+            const validHistory = historyArray.filter(item => item.timestamp >= fortyEightHoursAgo);
+            validHistory.sort((a, b) => b.timestamp - a.timestamp);
             
-            // Tambah item baru
-            history.push({
-                uid: uid,
-                timeStr: timeStr,
-                timestamp: now
+            validHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span class="history-uid">📇 ${item.uid}</span>
+                    <span class="history-time">⏱️ ${item.timeStr}</span>
+                `;
+                historyList.appendChild(div);
             });
             
-            // Hitung 48 jam yang lalu
-            const fortyEightHoursAgo = now - (48 * 60 * 60 * 1000);
+            if (validHistory.length !== historyArray.length) {
+                saveHistoryToStorage(validHistory);
+            }
+        }
+
+        function addHistoryItem(uid) {
+            const newItem = {
+                uid: uid,
+                timeStr: new Date().toLocaleTimeString(),
+                timestamp: Date.now()
+            };
             
-            // Filter hanya yang dalam 48 jam
+            let history = getHistoryFromStorage();
+            history.unshift(newItem);
+            
+            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
             history = history.filter(item => item.timestamp >= fortyEightHoursAgo);
             
-            // Batasi jumlah maksimal
             if (history.length > MAX_HISTORY) {
-                history = history.slice(-MAX_HISTORY);
+                history = history.slice(0, MAX_HISTORY);
             }
             
-            // Simpan ke storage
             saveHistoryToStorage(history);
-            
-            // Tampilkan ke UI
-            addHistoryItemToUI(uid, timeStr, true);
+            displayHistoryToUI(history);
         }
 
-        // Fungsi untuk menambah item ke UI
-        function addHistoryItemToUI(uid, timeStr, isNew = true) {
-            const historyList = document.getElementById('historyList');
+        // ==================== FUNGSI UPDATE SENSOR (DIMODIFIKASI) ====================
+        function updateSensorData(data) {
+            // Update nilai
+            document.getElementById('temp').textContent = data.temp?.toFixed(1) || '--';
+            document.getElementById('hum').textContent = data.hum?.toFixed(0) || '--';
+            document.getElementById('soil').textContent = data.soil || '--';
             
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-                <span class="history-uid">📇 ${uid}</span>
-                <span class="history-time">⏱️ ${timeStr}</span>
-            `;
+            // Animasi
+            ['temp', 'hum', 'soil'].forEach(id => {
+                const el = document.getElementById(id);
+                el.style.animation = 'pulse 0.3s';
+                setTimeout(() => el.style.animation = '', 300);
+            });
             
-            if (isNew) {
-                // Item baru masuk paling atas
-                historyList.insertBefore(item, historyList.firstChild);
-            } else {
-                // Item lama masuk sesuai urutan
-                historyList.appendChild(item);
+            // Simpan untuk chart
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            sensorData.timestamps.push(timeStr);
+            sensorData.temp.push(data.temp);
+            sensorData.hum.push(data.hum);
+            sensorData.soil.push(data.soil);
+            
+            // Batasi data di UI
+            if (sensorData.timestamps.length > MAX_CHART_POINTS) {
+                sensorData.timestamps.shift();
+                sensorData.temp.shift();
+                sensorData.hum.shift();
+                sensorData.soil.shift();
             }
             
-            // Batasi UI
-            while (historyList.children.length > MAX_HISTORY) {
-                historyList.removeChild(historyList.lastChild);
-            }
-        }
-
-        // Fungsi untuk clear history (opsional)
-        function clearHistory() {
-            localStorage.removeItem(HISTORY_KEY);
-            document.getElementById('historyList').innerHTML = '';
-            console.log('🗑️ History cleared');
+            // 🔴 SIMPAN KE STORAGE
+            saveChartToStorage();
+            
+            // Update charts
+            updateCharts();
         }
 
         // ==================== FUNGSI KONEKSI MQTT ====================
@@ -837,36 +908,7 @@
             if (data.lamp4) updateLampStatus(4, data.lamp4 === 'ON');
         }
 
-        // ==================== FUNGSI UPDATE SENSOR ====================
-        function updateSensorData(data) {
-            document.getElementById('temp').textContent = data.temp?.toFixed(1) || '--';
-            document.getElementById('hum').textContent = data.hum?.toFixed(0) || '--';
-            document.getElementById('soil').textContent = data.soil || '--';
-            
-            ['temp', 'hum', 'soil'].forEach(id => {
-                const el = document.getElementById(id);
-                el.style.animation = 'pulse 0.3s';
-                setTimeout(() => el.style.animation = '', 300);
-            });
-            
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString();
-            
-            sensorData.timestamps.push(timeStr);
-            sensorData.temp.push(data.temp);
-            sensorData.hum.push(data.hum);
-            sensorData.soil.push(data.soil);
-            
-            if (sensorData.timestamps.length > 100) {
-                sensorData.timestamps.shift();
-                sensorData.temp.shift();
-                sensorData.hum.shift();
-                sensorData.soil.shift();
-            }
-            
-            updateCharts();
-        }
-
+        // ==================== FUNGSI CHART ====================
         function updateCharts() {
             chartTempHum.data.labels = sensorData.timestamps;
             chartTempHum.data.datasets[0].data = sensorData.temp;
@@ -977,130 +1019,4 @@
                 return;
             }
             
-            const topic = topics[`pub_lamp${lampNum}`];
-            client.publish(topic, state);
-            console.log(`📤 Lamp ${lampNum}: ${state}`);
-            
-            const btn = document.getElementById(`lamp${lampNum}-${state.toLowerCase()}`);
-            btn.style.transform = 'scale(0.95)';
-            setTimeout(() => btn.style.transform = '', 200);
-        }
-
-        function openDoor() {
-            if (!connected || !client) {
-                alert('MQTT tidak terhubung!');
-                return;
-            }
-            
-            client.publish(topics.pub_doorlock, 'OPEN');
-            console.log('🔓 Door opened');
-            
-            const btn = event.target;
-            btn.textContent = '🔓 MEMBUKA...';
-            btn.disabled = true;
-            setTimeout(() => {
-                btn.textContent = '🔓 BUKA PINTU';
-                btn.disabled = false;
-            }, 2000);
-        }
-
-        function addCard() {
-            const uid = document.getElementById('cardUid').value.trim();
-            if (!uid) {
-                alert('Masukkan UID kartu!');
-                return;
-            }
-            
-            if (!connected || !client) {
-                alert('MQTT tidak terhubung!');
-                return;
-            }
-            
-            client.publish(topics.pub_rfid_add, uid);
-            document.getElementById('cardUid').value = '';
-            alert(`Kartu ${uid} ditambahkan`);
-        }
-
-        function deleteCard() {
-            const uid = document.getElementById('cardUid').value.trim();
-            if (!uid) {
-                alert('Masukkan UID kartu!');
-                return;
-            }
-            
-            if (!connected || !client) {
-                alert('MQTT tidak terhubung!');
-                return;
-            }
-            
-            client.publish(topics.pub_rfid_delete, uid);
-            document.getElementById('cardUid').value = '';
-            alert(`Kartu ${uid} dihapus`);
-        }
-
-        function requestStatus() {
-            if (!connected || !client) {
-                alert('MQTT tidak terhubung!');
-                return;
-            }
-            
-            client.publish(topics.pub_status_request, 'GET');
-            console.log('📤 Status requested');
-        }
-
-        function setTimeRange(hours) {
-            document.querySelectorAll('.time-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            console.log(`📊 Time range: ${hours} jam`);
-        }
-
-        function exportData() {
-            let csv = 'Timestamp,Temperature,Humidity,Soil\n';
-            for (let i = 0; i < sensorData.timestamps.length; i++) {
-                csv += `${sensorData.timestamps[i]},${sensorData.temp[i]},${sensorData.hum[i]},${sensorData.soil[i]}\n`;
-            }
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `sensor_data_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            alert(`✅ Data diexport: ${sensorData.timestamps.length} records`);
-        }
-
-        // ==================== INITIALIZATION ====================
-        window.addEventListener('load', () => {
-            console.log('🚀 Dashboard starting...');
-            
-            // 🔴 LOAD HISTORY DARI STORAGE
-            loadHistoryFromStorage();
-            
-            connectMQTT();
-            
-            // Simulasi data awal untuk testing
-            setTimeout(() => {
-                if (sensorData.timestamps.length === 0) {
-                    for (let i = 0; i < 10; i++) {
-                        const dummyData = {
-                            temp: 25 + Math.random() * 5,
-                            hum: 60 + Math.random() * 10,
-                            soil: 40 + Math.random() * 20
-                        };
-                        updateSensorData(dummyData);
-                    }
-                }
-            }, 2000);
-        });
-
-        // Cleanup
-        window.addEventListener('beforeunload', () => {
-            if (client && connected) {
-                client.end();
-            }
-        });
-    </script>
-</body>
-</html>
+            const topic = topics
