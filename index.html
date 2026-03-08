@@ -1,33 +1,40 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
 
 <title>ESP32 IoT Dashboard</title>
 
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
 <style>
 
 body{
 font-family:Arial;
-background:#f2f2f2;
+background:#111;
+color:white;
 text-align:center;
 }
 
 .card{
-background:white;
+background:#1e1e1e;
+margin:15px;
 padding:20px;
-margin:20px;
 border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
 display:inline-block;
 width:200px;
 }
 
+.value{
+font-size:28px;
+}
+
 button{
-width:120px;
-height:50px;
-font-size:18px;
-margin:10px;
+width:100px;
+height:40px;
+margin:5px;
+font-size:16px;
 }
 
 </style>
@@ -36,37 +43,35 @@ margin:10px;
 
 <body>
 
-<h1>ESP32 Smart Dashboard</h1>
+<h1>ESP32 IoT Dashboard</h1>
 
 <div class="card">
 <h3>Suhu</h3>
-<p id="suhu">-- °C</p>
+<div id="suhu" class="value">--</div>
 </div>
 
 <div class="card">
 <h3>Kelembapan</h3>
-<p id="hum">-- %</p>
+<div id="hum" class="value">--</div>
 </div>
 
 <div class="card">
 <h3>Kelembapan Tanah</h3>
-<p id="soil">--</p>
+<div id="soil" class="value">--</div>
 </div>
 
 <div class="card">
-<h3>RFID Terakhir</h3>
-<p id="rfid">--</p>
+<h3>RFID</h3>
+<div id="rfid" class="value">--</div>
 </div>
 
 <div class="card">
-<h3>Kontrol Relay</h3>
 
-<button onclick="relayOn()">ON</button>
-<button onclick="relayOff()">OFF</button>
+<h3>Relay</h3>
+
+<button onclick="relayOn()">ON</button> <button onclick="relayOff()">OFF</button>
 
 </div>
-
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <script>
 
@@ -78,9 +83,7 @@ password:"?d6OcSIy38T@0;ojDV,u"
 }
 )
 
-client.on("connect", function () {
-
-console.log("MQTT Connected")
+client.on("connect",function(){
 
 client.subscribe("rumah/suhu")
 client.subscribe("rumah/kelembapan")
@@ -89,9 +92,9 @@ client.subscribe("rumah/rfid")
 
 })
 
-client.on("message", function(topic,message){
+client.on("message",function(topic,message){
 
-let data = message.toString()
+let data=message.toString()
 
 if(topic=="rumah/suhu"){
 document.getElementById("suhu").innerHTML=data+" °C"
@@ -112,15 +115,11 @@ document.getElementById("rfid").innerHTML=data
 })
 
 function relayOn(){
-
 client.publish("rumah/lampu","ON")
-
 }
 
 function relayOff(){
-
 client.publish("rumah/lampu","OFF")
-
 }
 
 </script>
