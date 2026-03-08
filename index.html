@@ -1035,4 +1035,191 @@
                         data: [],
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 6
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // ==================== FUNGSI KONTROL ====================
+        function controlLamp(lampNum, state) {
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung! Menampilkan data offline');
+                return;
+            }
+            
+            const topic = topics[`pub_lamp${lampNum}`];
+            client.publish(topic, state);
+            console.log(`📤 Lamp ${lampNum}: ${state}`);
+            
+            const btn = document.getElementById(`lamp${lampNum}-${state.toLowerCase()}`);
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => btn.style.transform = '', 200);
+        }
+
+        function openDoor() {
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung!');
+                return;
+            }
+            
+            client.publish(topics.pub_doorlock, 'OPEN');
+            console.log('🔓 Door opened');
+            
+            const btn = event.target;
+            btn.textContent = '🔓 MEMBUKA...';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = '🔓 BUKA PINTU';
+                btn.disabled = false;
+            }, 2000);
+        }
+
+        function addCard() {
+            const uid = document.getElementById('cardUid').value.trim();
+            if (!uid) {
+                alert('Masukkan UID kartu!');
+                return;
+            }
+            
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung!');
+                return;
+            }
+            
+            client.publish(topics.pub_rfid_add, uid);
+            document.getElementById('cardUid').value = '';
+            alert(`Kartu ${uid} ditambahkan`);
+        }
+
+        function deleteCard() {
+            const uid = document.getElementById('cardUid').value.trim();
+            if (!uid) {
+                alert('Masukkan UID kartu!');
+                return;
+            }
+            
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung!');
+                return;
+            }
+            
+            client.publish(topics.pub_rfid_delete, uid);
+            document.getElementById('cardUid').value = '';
+            alert(`Kartu ${uid} dihapus`);
+        }
+
+        function requestStatus() {
+            if (!connected || !client) {
+                console.log('Cannot request status - not connected');
+                return;
+            }
+            
+            client.publish(topics.pub_status_request, 'GET');
+            console.log('📤 Status requested');
+        }
+
+        function setTimeRange(hours) {
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            console.log(`📊 Time range: ${hours} jam`);
+        }
+
+        function exportData() {
+            let csv = 'Timestamp,Temperature,Humidity,Soil\n';
+            for (let i = 0; i < sensorData.timestamps.length; i++) {
+                csv += `${sensorData.timestamps[i]},${sensorData.temp[i]},${sensorData.hum[i]},${sensorData.soil[i]}\n`;
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sensor_data_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            alert(`✅ Data diexport: ${sensorData.timestamps.length} records`);
+        }
+
+        function clearAllData() {
+            if (confirm('Hapus semua history dan data grafik?')) {
+                localStorage.removeItem(HISTORY_KEY);
+                localStorage.removeItem(CHART_KEY);
+                
+                sensorData = {
+                    timestamps: [],
+                    temp: [],
+                    hum: [],
+                    soil: []
+                };
+                
+                document.getElementById('historyList').innerHTML = '';
+                updateCharts();
+                console.log('🗑️ All data cleared');
+            }
+        }
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('load', () => {
+            console.log('🚀 Dashboard starting...');
+            
+            // Load saved data
+            loadChartFromStorage();
+            const savedHistory = getHistoryFromStorage();
+            displayHistoryToUI(savedHistory);
+            
+            // Start MQTT connection
+            setTimeout(() => {
+                connectMQTT();
+            }, 1000);
+            
+            // Simulasi data dummy untuk testing
+            setTimeout(() => {
+                if (sensorData.timestamps.length === 0) {
+                    console.log('📊 Generating dummy data for preview');
+                    for (let i = 0; i < 10; i++) {
+                        const dummyData = {
+                            temp: 25 + Math.random() * 5,
+                            hum: 60 + Math.random() * 10,
+                            soil: 40 + Math.random() * 20
+                        };
+                        updateSensorData(dummyData);
+                    }
+                }
+            }, 3000);
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (client && connected) {
+                client.end(true);
+            }
+        });
+    </script>
+</body>
+</html>
