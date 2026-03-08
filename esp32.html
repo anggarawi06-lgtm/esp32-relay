@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ESP32 Relay Control</title>
+</head>
+
+<body style="text-align:center;font-family:Arial">
+
+<h2>Kontrol Relay ESP32</h2>
+
+<button onclick="relayOn()" style="width:120px;height:50px;font-size:18px">ON</button>
+<button onclick="relayOff()" style="width:120px;height:50px;font-size:18px">OFF</button>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<script>
+
+const client = mqtt.connect(
+"wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt",
+{
+username: "hivemq.webclient.1772948203432",
+password: "?d6OcSIy38T@0;ojDV,u"
+})
+
+client.on("connect", function () {
+console.log("MQTT Connected")
+})
+
+function relayOn(){
+client.publish("rumah/lampu","ON")
+}
+
+function relayOff(){
+client.publish("rumah/lampu","OFF")
+}
+
+</script>
+
+</body>
+</html>
