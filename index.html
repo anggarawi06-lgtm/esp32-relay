@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     
     <style>
-        /* CSS SAMA PERSIS DENGAN ASLINYA - TIDAK DIUBAH */
+        /* CSS SAMA PERSIS DENGAN ASLINYA */
         * {
             margin: 0;
             padding: 0;
@@ -527,12 +527,37 @@
     </div>
 
     <script>
-        // ==================== KONFIGURASI MQTT ====================
+        // ==================== KONFIGURASI MQTT DENGAN FALLBACK SERVER ====================
         const mqttConfig = {
-            server: 'wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt',
-            username: 'hivemq.webclient.1772948203432',
-            password: '?d6OcSIy38T@0;ojDV,u',
-            clientId: 'webclient_' + Math.random().toString(16).substr(2, 8)
+            // Daftar server yang akan dicoba secara berurutan
+            servers: [
+                { 
+                    name: 'HiveMQ Cloud',
+                    url: 'wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt',
+                    username: 'hivemq.webclient.1772948203432',
+                    password: '?d6OcSIy38T@0;ojDV,u'
+                },
+                { 
+                    name: 'HiveMQ Public Broker',
+                    url: 'wss://broker.hivemq.com:8000/mqtt',
+                    username: null,
+                    password: null
+                },
+                { 
+                    name: 'Mosquitto Test Server',
+                    url: 'wss://test.mosquitto.org:8081/mqtt',
+                    username: null,
+                    password: null
+                },
+                { 
+                    name: 'EMQX Test Server',
+                    url: 'wss://broker.emqx.io:8084/mqtt',
+                    username: null,
+                    password: null
+                }
+            ],
+            currentServerIndex: 0,
+            clientId: 'webclient_' + Math.random().toString(36).substring(2, 10)
         };
 
         // ==================== MQTT TOPICS ====================
@@ -557,6 +582,9 @@
         // ==================== GLOBAL VARIABLES ====================
         let client = null;
         let connected = false;
+        let reconnectTimer = null;
+        let connectionAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
         
         // Status lampu
         let lampStates = {
@@ -568,9 +596,8 @@
 
         // ==================== DATA GRAFIK DENGAN LOCALSTORAGE ====================
         const CHART_KEY = 'sensor_chart_data';
-        const MAX_CHART_POINTS = 100; // Batasi di UI
+        const MAX_CHART_POINTS = 100;
         
-        // Data untuk charts
         let sensorData = {
             timestamps: [],
             temp: [],
@@ -578,22 +605,9 @@
             soil: []
         };
 
-        // Fungsi untuk menyimpan data grafik ke localStorage
+        // ==================== FUNGSI PENYIMPANAN GRAFIK ====================
         function saveChartToStorage() {
             try {
-                // Hitung 48 jam yang lalu
-                const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
-                
-                // Filter data yang masih dalam 48 jam
-                const validData = {
-                    timestamps: [],
-                    temp: [],
-                    hum: [],
-                    soil: []
-                };
-                
-                // Asumsikan kita menyimpan timestamp asli juga (perlu ditambahkan)
-                // Untuk sekarang, kita simpan semua data
                 const dataToSave = {
                     timestamps: sensorData.timestamps,
                     temp: sensorData.temp,
@@ -601,31 +615,23 @@
                     soil: sensorData.soil,
                     savedAt: Date.now()
                 };
-                
                 localStorage.setItem(CHART_KEY, JSON.stringify(dataToSave));
-                console.log('💾 Chart data saved:', sensorData.timestamps.length, 'points');
             } catch (e) {
                 console.error('Error saving chart:', e);
             }
         }
 
-        // Fungsi untuk memuat data grafik dari localStorage
         function loadChartFromStorage() {
             try {
                 const saved = localStorage.getItem(CHART_KEY);
                 if (saved) {
                     const data = JSON.parse(saved);
-                    
-                    // Validasi data
                     if (data.timestamps && data.temp && data.hum && data.soil) {
                         sensorData.timestamps = data.timestamps || [];
                         sensorData.temp = data.temp || [];
                         sensorData.hum = data.hum || [];
                         sensorData.soil = data.soil || [];
-                        
                         console.log('📊 Loaded chart data:', sensorData.timestamps.length, 'points');
-                        
-                        // Update charts
                         updateCharts();
                         return true;
                     }
@@ -636,28 +642,7 @@
             return false;
         }
 
-        // Fungsi untuk membersihkan semua data
-        function clearAllData() {
-            if (confirm('Hapus semua history dan data grafik?')) {
-                localStorage.removeItem(HISTORY_KEY);
-                localStorage.removeItem(CHART_KEY);
-                
-                // Reset data
-                sensorData = {
-                    timestamps: [],
-                    temp: [],
-                    hum: [],
-                    soil: []
-                };
-                
-                document.getElementById('historyList').innerHTML = '';
-                updateCharts();
-                
-                console.log('🗑️ All data cleared');
-            }
-        }
-
-        // ==================== FUNGSI HISTORY DENGAN LOCALSTORAGE ====================
+        // ==================== FUNGSI HISTORY ====================
         const HISTORY_KEY = 'rfid_history_data';
         const MAX_HISTORY = 20;
 
@@ -722,21 +707,18 @@
             displayHistoryToUI(history);
         }
 
-        // ==================== FUNGSI UPDATE SENSOR (DIMODIFIKASI) ====================
+        // ==================== FUNGSI UPDATE SENSOR ====================
         function updateSensorData(data) {
-            // Update nilai
             document.getElementById('temp').textContent = data.temp?.toFixed(1) || '--';
             document.getElementById('hum').textContent = data.hum?.toFixed(0) || '--';
             document.getElementById('soil').textContent = data.soil || '--';
             
-            // Animasi
             ['temp', 'hum', 'soil'].forEach(id => {
                 const el = document.getElementById(id);
                 el.style.animation = 'pulse 0.3s';
                 setTimeout(() => el.style.animation = '', 300);
             });
             
-            // Simpan untuk chart
             const now = new Date();
             const timeStr = now.toLocaleTimeString();
             
@@ -745,7 +727,6 @@
             sensorData.hum.push(data.hum);
             sensorData.soil.push(data.soil);
             
-            // Batasi data di UI
             if (sensorData.timestamps.length > MAX_CHART_POINTS) {
                 sensorData.timestamps.shift();
                 sensorData.temp.shift();
@@ -753,56 +734,126 @@
                 sensorData.soil.shift();
             }
             
-            // 🔴 SIMPAN KE STORAGE
             saveChartToStorage();
-            
-            // Update charts
             updateCharts();
         }
 
-        // ==================== FUNGSI KONEKSI MQTT ====================
+        // ==================== FUNGSI MQTT CONNECTION (FIXED) ====================
         function connectMQTT() {
-            updateConnectionStatus('Menghubungkan...', '#fbbf24');
+            if (connectionAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                updateConnectionStatus('OFFLINE (Max Attempts)', '#ef4444');
+                console.log('❌ Max connection attempts reached');
+                return;
+            }
+
+            const server = mqttConfig.servers[mqttConfig.currentServerIndex];
+            updateConnectionStatus(`Mencoba ${server.name}...`, '#fbbf24');
+            
+            console.log(`🔄 Connecting to ${server.name} (${mqttConfig.currentServerIndex + 1}/${mqttConfig.servers.length})`);
             
             try {
-                client = mqtt.connect(mqttConfig.server, {
-                    username: mqttConfig.username,
-                    password: mqttConfig.password,
-                    clientId: mqttConfig.clientId,
+                const options = {
+                    clientId: mqttConfig.clientId + '_' + Math.random().toString(36).substring(2, 6),
                     clean: true,
-                    reconnectPeriod: 5000,
-                    connectTimeout: 30000
-                });
+                    connectTimeout: 10000, // 10 detik timeout
+                    reconnectPeriod: 0, // Matikan auto reconnect, kita handle manual
+                    rejectUnauthorized: false
+                };
+
+                // Tambahkan username/password jika ada
+                if (server.username) {
+                    options.username = server.username;
+                    options.password = server.password;
+                }
+
+                // Buat koneksi baru
+                if (client) {
+                    try {
+                        client.end(true);
+                    } catch (e) {}
+                }
+
+                client = mqtt.connect(server.url, options);
+
+                // Set timeout untuk koneksi
+                const connectionTimeout = setTimeout(() => {
+                    if (!connected) {
+                        console.log(`⏱️ Connection timeout to ${server.name}`);
+                        client.end(true);
+                        tryNextServer();
+                    }
+                }, 15000);
 
                 client.on('connect', () => {
-                    console.log('✅ MQTT Connected');
+                    clearTimeout(connectionTimeout);
+                    console.log(`✅ Connected to ${server.name}`);
                     connected = true;
+                    connectionAttempts = 0;
+                    mqttConfig.currentServerIndex = 0; // Reset ke server pertama untuk下次
                     updateConnectionStatus('TERHUBUNG', '#10b981');
+                    
+                    // Subscribe ke topics
                     subscribeToTopics();
-                    setTimeout(requestStatus, 1000);
+                    
+                    // Request status
+                    setTimeout(() => {
+                        if (connected) requestStatus();
+                    }, 1000);
                 });
 
                 client.on('reconnect', () => {
-                    console.log('🔄 MQTT Reconnecting...');
+                    console.log('🔄 Reconnecting...');
                     updateConnectionStatus('Reconnect...', '#fbbf24');
                 });
 
                 client.on('close', () => {
-                    console.log('❌ MQTT Disconnected');
-                    connected = false;
-                    updateConnectionStatus('TERPUTUS', '#ef4444');
+                    console.log('❌ Connection closed');
+                    if (connected) {
+                        connected = false;
+                        updateConnectionStatus('TERPUTUS', '#ef4444');
+                        tryNextServer();
+                    }
                 });
 
                 client.on('error', (err) => {
-                    console.error('MQTT Error:', err);
-                    updateConnectionStatus('Error', '#ef4444');
+                    console.error(`MQTT Error on ${server.name}:`, err);
+                    clearTimeout(connectionTimeout);
+                    if (!connected) {
+                        tryNextServer();
+                    }
                 });
 
                 client.on('message', handleMQTTMessage);
 
             } catch (error) {
-                console.error('MQTT Connection error:', error);
-                updateConnectionStatus('Gagal', '#ef4444');
+                console.error('Connection error:', error);
+                tryNextServer();
+            }
+        }
+
+        function tryNextServer() {
+            if (client) {
+                try {
+                    client.end(true);
+                } catch (e) {}
+            }
+
+            mqttConfig.currentServerIndex++;
+            connectionAttempts++;
+
+            if (mqttConfig.currentServerIndex < mqttConfig.servers.length) {
+                console.log(`🔄 Mencoba server berikutnya (${mqttConfig.currentServerIndex + 1}/${mqttConfig.servers.length})`);
+                setTimeout(() => connectMQTT(), 2000);
+            } else {
+                console.log('❌ Semua server gagal, akan coba lagi nanti');
+                mqttConfig.currentServerIndex = 0;
+                updateConnectionStatus('GAGAL KONEK', '#ef4444');
+                
+                // Coba lagi setelah 30 detik
+                setTimeout(() => {
+                    connectionAttempts = 0;
+                    connectMQTT();
+                }, 30000);
             }
         }
 
@@ -819,9 +870,11 @@
             ];
             
             topicsToSubscribe.forEach(topic => {
-                client.subscribe(topic, (err) => {
+                client.subscribe(topic, { qos: 0 }, (err) => {
                     if (!err) {
                         console.log(`📡 Subscribed: ${topic}`);
+                    } else {
+                        console.error(`Failed to subscribe: ${topic}`);
                     }
                 });
             });
@@ -982,41 +1035,4 @@
                         data: [],
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            boxWidth: 6
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    }
-                }
-            }
-        });
-
-        // ==================== FUNGSI KONTROL ====================
-        function controlLamp(lampNum, state) {
-            if (!connected || !client) {
-                alert('MQTT tidak terhubung!');
-                return;
-            }
-            
-            const topic = topics
+                        tension
