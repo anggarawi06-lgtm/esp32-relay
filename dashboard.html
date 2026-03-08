@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Smart Doorlock Dashboard</title>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+}
+
+.header{
+background:#111827;
+color:white;
+padding:15px;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:10px;
+margin:10px;
+display:inline-block;
+width:200px;
+}
+
+.value{
+font-size:25px;
+}
+
+table{
+width:100%;
+background:white;
+margin-top:20px;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+Smart Doorlock IoT Dashboard
+
+<button onclick="logout()" style="float:right">Logout</button>
+
+</div>
+
+<div class="container">
+
+<div class="card">
+Suhu
+<div id="suhu" class="value">--</div>
+</div>
+
+<div class="card">
+Kelembapan
+<div id="hum" class="value">--</div>
+</div>
+
+<div class="card">
+RFID Scan
+<div id="rfid" class="value">--</div>
+</div>
+
+<br><br>
+
+<button onclick="openDoor()">Buka Pintu</button>
+
+<h2>Tambah Kartu</h2>
+
+<input id="uid">
+<button onclick="addCard()">Tambah</button>
+
+<h2>Log RFID</h2>
+
+<table>
+
+<tr>
+<th>UID</th>
+<th>Waktu</th>
+</tr>
+
+<tbody id="log">
+
+</tbody>
+
+</table>
+
+<br>
+
+<canvas id="chart"></canvas>
+
+</div>
+
+<script>
+
+if(localStorage.getItem("login")!="true"){
+window.location="index.html"
+}
+
+const client=mqtt.connect(
+"wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt",
+{
+username:"hivemq.webclient.1772948203432",
+password:"?d6OcSIy38T@0;ojDV,u"
+}
+)
+
+let labels=[]
+let suhuData=[]
+
+const chart=new Chart(
+document.getElementById("chart"),
+{
+type:"line",
+data:{
+labels:labels,
+datasets:[{
+label:"Suhu",
+data:suhuData
+}]
+}
+})
+
+client.on("connect",function(){
+
+client.subscribe("rumah/suhu")
+client.subscribe("rumah/kelembapan")
+client.subscribe("rumah/rfid")
+
+})
+
+client.on("message",function(topic,message){
+
+let data=message.toString()
+
+if(topic=="rumah/suhu"){
+
+document.getElementById("suhu").innerHTML=data
+
+labels.push("")
+suhuData.push(data)
+
+if(labels.length>20){
+labels.shift()
+suhuData.shift()
+}
+
+chart.update()
+
+}
+
+if(topic=="rumah/kelembapan"){
+document.getElementById("hum").innerHTML=data
+}
+
+if(topic=="rumah/rfid"){
+
+document.getElementById("rfid").innerHTML=data
+
+let row=document.createElement("tr")
+
+row.innerHTML="<td>"+data+"</td><td>"+new Date().toLocaleTimeString()+"</td>"
+
+document.getElementById("log").prepend(row)
+
+}
+
+})
+
+function openDoor(){
+
+client.publish("doorlock/open","1")
+
+}
+
+function addCard(){
+
+let uid=document.getElementById("uid").value
+
+client.publish("doorlock/add",uid)
+
+}
+
+function logout(){
+
+localStorage.removeItem("login")
+
+window.location="index.html"
+
+}
+
+</script>
+
+</body>
+
+</html>
