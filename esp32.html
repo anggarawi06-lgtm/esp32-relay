@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart IoT Dashboard | ESP32 Control</title>
+    
+    <!-- Libraries -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <style>
+        /* CSS SAMA PERSIS DENGAN ASLINYA */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            color: #1e3c72;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .connection-status {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            background: #fbbf24;
+            color: #1e3c72;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            color: #1e3c72;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lamp-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-left: 5px solid #2a5298;
+        }
+
+        .lamp-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .lamp-icon.on {
+            color: #fbbf24;
+            text-shadow: 0 0 20px #fbbf24;
+        }
+
+        .lamp-icon.off {
+            color: #9ca3af;
+        }
+
+        .lamp-title {
+            color: #1f2937;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .lamp-status {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .status-on {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-off {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex: 1;
+        }
+
+        .btn-on {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-off {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.1em;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .sensor-item {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .sensor-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #1e3c72;
+            line-height: 1.2;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .rfid-info {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .rfid-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .rfid-value {
+            font-weight: 600;
+            color: #fbbf24;
+            font-family: monospace;
+            font-size: 1.2em;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .input-field {
+            flex: 2;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 50px;
+            font-size: 1em;
+        }
+
+        .history-container {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 10px;
+        }
+
+        .history-item {
+            padding: 10px 15px;
+            background: white;
+            margin: 5px 0;
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-uid {
+            font-weight: 600;
+            color: #1e3c72;
+            font-family: monospace;
+        }
+
+        .history-time {
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .time-range {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .time-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 50px;
+            background: #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-btn:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .time-btn.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9em;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i>🏠</i> 
+                SMART IoT DASHBOARD
+            </h1>
+            <div class="connection-status" id="connectionStatus">
+                ⚡ Menghubungkan...
+            </div>
+        </div>
+
+        <!-- Time Range Selector -->
+        <div class="time-range">
+            <span style="font-weight: 600; color: #1e3c72;">📊 Range Waktu:</span>
+            <button class="time-btn" onclick="setTimeRange(1)">1 Jam</button>
+            <button class="time-btn" onclick="setTimeRange(6)">6 Jam</button>
+            <button class="time-btn" onclick="setTimeRange(12)">12 Jam</button>
+            <button class="time-btn" onclick="setTimeRange(24)">24 Jam</button>
+            <button class="time-btn active" onclick="setTimeRange(48)">48 Jam</button>
+            <button class="btn btn-primary" onclick="exportData()" style="margin-left: auto;">
+                📥 Export CSV
+            </button>
+            <button class="btn btn-primary" onclick="requestStatus()">
+                🔄 Sync Status
+            </button>
+            <button class="btn btn-primary" onclick="clearAllData()" style="background: #ef4444;">
+                🗑️ Clear Data
+            </button>
+        </div>
+
+        <!-- Lamp Control Cards -->
+        <div class="grid-4">
+            <div class="lamp-card" id="lamp1-card">
+                <div class="lamp-icon" id="lamp1-icon">💡</div>
+                <div class="lamp-title">LAMPU 1</div>
+                <div class="lamp-status" id="lamp1-status">OFF</div>
+                <div class="btn-group">
+                    <button class="btn btn-on" onclick="controlLamp(1, 'ON')" id="lamp1-on">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(1, 'OFF')" id="lamp1-off">OFF</button>
+                </div>
+            </div>
+            <div class="lamp-card" id="lamp2-card">
+                <div class="lamp-icon" id="lamp2-icon">💡</div>
+                <div class="lamp-title">LAMPU 2</div>
+                <div class="lamp-status" id="lamp2-status">OFF</div>
+                <div class="btn-group">
+                    <button class="btn btn-on" onclick="controlLamp(2, 'ON')" id="lamp2-on">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(2, 'OFF')" id="lamp2-off">OFF</button>
+                </div>
+            </div>
+            <div class="lamp-card" id="lamp3-card">
+                <div class="lamp-icon" id="lamp3-icon">💡</div>
+                <div class="lamp-title">LAMPU 3</div>
+                <div class="lamp-status" id="lamp3-status">OFF</div>
+                <div class="btn-group">
+                    <button class="btn btn-on" onclick="controlLamp(3, 'ON')" id="lamp3-on">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(3, 'OFF')" id="lamp3-off">OFF</button>
+                </div>
+            </div>
+            <div class="lamp-card" id="lamp4-card">
+                <div class="lamp-icon" id="lamp4-icon">💡</div>
+                <div class="lamp-title">LAMPU 4</div>
+                <div class="lamp-status" id="lamp4-status">OFF</div>
+                <div class="btn-group">
+                    <button class="btn btn-on" onclick="controlLamp(4, 'ON')" id="lamp4-on">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(4, 'OFF')" id="lamp4-off">OFF</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensor Cards -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">
+                    <span>🌡️</span> REAL-TIME SENSORS
+                </div>
+                <div class="sensor-grid">
+                    <div class="sensor-item">
+                        <div class="sensor-value" id="temp">--</div>
+                        <div class="sensor-unit">°C</div>
+                        <div class="sensor-label">Temperature</div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-value" id="hum">--</div>
+                        <div class="sensor-unit">%</div>
+                        <div class="sensor-label">Humidity</div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-value" id="soil">--</div>
+                        <div class="sensor-unit">%</div>
+                        <div class="sensor-label">Soil Moisture</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>🚪</span> DOOR CONTROL
+                </div>
+                <button class="btn btn-primary" onclick="openDoor()" style="width: 100%; padding: 20px; font-size: 1.2em;">
+                    🔓 BUKA PINTU
+                </button>
+                <p style="text-align: center; margin-top: 15px; color: #64748b;">
+                    Tekan untuk membuka pintu (2 detik)
+                </p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">
+                    <span>📈</span> TEMPERATURE & HUMIDITY
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartTempHum"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    <span>📊</span> SOIL MOISTURE
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartSoil"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- RFID Section -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">
+                    <span>🔑</span> RFID ACCESS
+                </div>
+                <div class="rfid-info">
+                    <div class="rfid-row">
+                        <span class="rfid-label">UID Terakhir:</span>
+                        <span class="rfid-value" id="rfidUid">---</span>
+                    </div>
+                    <div class="rfid-row">
+                        <span class="rfid-label">Status:</span>
+                        <span class="rfid-value" id="rfidStatus">Menunggu...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>💳</span> CARD MANAGEMENT
+                </div>
+                <div class="input-group">
+                    <input type="text" id="cardUid" class="input-field" placeholder="Masukkan UID kartu">
+                    <button class="btn btn-on" onclick="addCard()">Tambah</button>
+                    <button class="btn btn-off" onclick="deleteCard()">Hapus</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access History -->
+        <div class="card">
+            <div class="card-title">
+                <span>📜</span> ACCESS HISTORY (48 jam terakhir)
+            </div>
+            <div class="history-container" id="historyList">
+                <!-- History akan ditambahkan via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2024 Smart IoT Dashboard | ESP32 + MQTT | Data tersimpan 48 jam di browser</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== KONFIGURASI MQTT DENGAN FALLBACK SERVER ====================
+        const mqttConfig = {
+            // Daftar server yang akan dicoba secara berurutan
+            servers: [
+                { 
+                    name: 'HiveMQ Cloud',
+                    url: 'wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt',
+                    username: 'hivemq.webclient.1772948203432',
+                    password: '?d6OcSIy38T@0;ojDV,u'
+                },
+                { 
+                    name: 'HiveMQ Public Broker',
+                    url: 'wss://broker.hivemq.com:8000/mqtt',
+                    username: null,
+                    password: null
+                },
+                { 
+                    name: 'Mosquitto Test Server',
+                    url: 'wss://test.mosquitto.org:8081/mqtt',
+                    username: null,
+                    password: null
+                },
+                { 
+                    name: 'EMQX Test Server',
+                    url: 'wss://broker.emqx.io:8084/mqtt',
+                    username: null,
+                    password: null
+                }
+            ],
+            currentServerIndex: 0,
+            clientId: 'webclient_' + Math.random().toString(36).substring(2, 10)
+        };
+
+        // ==================== MQTT TOPICS ====================
+        const topics = {
+            sub_sensor: 'esp32/sensor',
+            sub_rfid_scan: 'esp32/rfid/scan',
+            sub_rfid_status: 'esp32/rfid/status',
+            sub_rfid_history: 'esp32/rfid/history',
+            sub_lamp_status: 'esp32/lamp/status',
+            sub_lamp_all: 'esp32/lamp/all',
+            
+            pub_lamp1: 'esp32/lamp1',
+            pub_lamp2: 'esp32/lamp2',
+            pub_lamp3: 'esp32/lamp3',
+            pub_lamp4: 'esp32/lamp4',
+            pub_doorlock: 'esp32/doorlock',
+            pub_rfid_add: 'esp32/rfid/add',
+            pub_rfid_delete: 'esp32/rfid/delete',
+            pub_status_request: 'esp32/request/status'
+        };
+
+        // ==================== GLOBAL VARIABLES ====================
+        let client = null;
+        let connected = false;
+        let reconnectTimer = null;
+        let connectionAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        
+        // Status lampu
+        let lampStates = {
+            1: false,
+            2: false,
+            3: false,
+            4: false
+        };
+
+        // ==================== DATA GRAFIK DENGAN LOCALSTORAGE ====================
+        const CHART_KEY = 'sensor_chart_data';
+        const MAX_CHART_POINTS = 100;
+        
+        let sensorData = {
+            timestamps: [],
+            temp: [],
+            hum: [],
+            soil: []
+        };
+
+        // ==================== FUNGSI PENYIMPANAN GRAFIK ====================
+        function saveChartToStorage() {
+            try {
+                const dataToSave = {
+                    timestamps: sensorData.timestamps,
+                    temp: sensorData.temp,
+                    hum: sensorData.hum,
+                    soil: sensorData.soil,
+                    savedAt: Date.now()
+                };
+                localStorage.setItem(CHART_KEY, JSON.stringify(dataToSave));
+            } catch (e) {
+                console.error('Error saving chart:', e);
+            }
+        }
+
+        function loadChartFromStorage() {
+            try {
+                const saved = localStorage.getItem(CHART_KEY);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.timestamps && data.temp && data.hum && data.soil) {
+                        sensorData.timestamps = data.timestamps || [];
+                        sensorData.temp = data.temp || [];
+                        sensorData.hum = data.hum || [];
+                        sensorData.soil = data.soil || [];
+                        console.log('📊 Loaded chart data:', sensorData.timestamps.length, 'points');
+                        updateCharts();
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading chart:', e);
+            }
+            return false;
+        }
+
+        // ==================== FUNGSI HISTORY ====================
+        const HISTORY_KEY = 'rfid_history_data';
+        const MAX_HISTORY = 20;
+
+        function saveHistoryToStorage(historyArray) {
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
+            } catch (e) {
+                console.error('Error saving history:', e);
+            }
+        }
+
+        function getHistoryFromStorage() {
+            try {
+                const saved = localStorage.getItem(HISTORY_KEY);
+                return saved ? JSON.parse(saved) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function displayHistoryToUI(historyArray) {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+            const validHistory = historyArray.filter(item => item.timestamp >= fortyEightHoursAgo);
+            validHistory.sort((a, b) => b.timestamp - a.timestamp);
+            
+            validHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span class="history-uid">📇 ${item.uid}</span>
+                    <span class="history-time">⏱️ ${item.timeStr}</span>
+                `;
+                historyList.appendChild(div);
+            });
+            
+            if (validHistory.length !== historyArray.length) {
+                saveHistoryToStorage(validHistory);
+            }
+        }
+
+        function addHistoryItem(uid) {
+            const newItem = {
+                uid: uid,
+                timeStr: new Date().toLocaleTimeString(),
+                timestamp: Date.now()
+            };
+            
+            let history = getHistoryFromStorage();
+            history.unshift(newItem);
+            
+            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+            history = history.filter(item => item.timestamp >= fortyEightHoursAgo);
+            
+            if (history.length > MAX_HISTORY) {
+                history = history.slice(0, MAX_HISTORY);
+            }
+            
+            saveHistoryToStorage(history);
+            displayHistoryToUI(history);
+        }
+
+        // ==================== FUNGSI UPDATE SENSOR ====================
+        function updateSensorData(data) {
+            document.getElementById('temp').textContent = data.temp?.toFixed(1) || '--';
+            document.getElementById('hum').textContent = data.hum?.toFixed(0) || '--';
+            document.getElementById('soil').textContent = data.soil || '--';
+            
+            ['temp', 'hum', 'soil'].forEach(id => {
+                const el = document.getElementById(id);
+                el.style.animation = 'pulse 0.3s';
+                setTimeout(() => el.style.animation = '', 300);
+            });
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            sensorData.timestamps.push(timeStr);
+            sensorData.temp.push(data.temp);
+            sensorData.hum.push(data.hum);
+            sensorData.soil.push(data.soil);
+            
+            if (sensorData.timestamps.length > MAX_CHART_POINTS) {
+                sensorData.timestamps.shift();
+                sensorData.temp.shift();
+                sensorData.hum.shift();
+                sensorData.soil.shift();
+            }
+            
+            saveChartToStorage();
+            updateCharts();
+        }
+
+        // ==================== FUNGSI MQTT CONNECTION (FIXED) ====================
+        function connectMQTT() {
+            if (connectionAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                updateConnectionStatus('OFFLINE (Max Attempts)', '#ef4444');
+                console.log('❌ Max connection attempts reached');
+                return;
+            }
+
+            const server = mqttConfig.servers[mqttConfig.currentServerIndex];
+            updateConnectionStatus(`Mencoba ${server.name}...`, '#fbbf24');
+            
+            console.log(`🔄 Connecting to ${server.name} (${mqttConfig.currentServerIndex + 1}/${mqttConfig.servers.length})`);
+            
+            try {
+                const options = {
+                    clientId: mqttConfig.clientId + '_' + Math.random().toString(36).substring(2, 6),
+                    clean: true,
+                    connectTimeout: 10000, // 10 detik timeout
+                    reconnectPeriod: 0, // Matikan auto reconnect, kita handle manual
+                    rejectUnauthorized: false
+                };
+
+                // Tambahkan username/password jika ada
+                if (server.username) {
+                    options.username = server.username;
+                    options.password = server.password;
+                }
+
+                // Buat koneksi baru
+                if (client) {
+                    try {
+                        client.end(true);
+                    } catch (e) {}
+                }
+
+                client = mqtt.connect(server.url, options);
+
+                // Set timeout untuk koneksi
+                const connectionTimeout = setTimeout(() => {
+                    if (!connected) {
+                        console.log(`⏱️ Connection timeout to ${server.name}`);
+                        client.end(true);
+                        tryNextServer();
+                    }
+                }, 15000);
+
+                client.on('connect', () => {
+                    clearTimeout(connectionTimeout);
+                    console.log(`✅ Connected to ${server.name}`);
+                    connected = true;
+                    connectionAttempts = 0;
+                    mqttConfig.currentServerIndex = 0; // Reset ke server pertama untuk下次
+                    updateConnectionStatus('TERHUBUNG', '#10b981');
+                    
+                    // Subscribe ke topics
+                    subscribeToTopics();
+                    
+                    // Request status
+                    setTimeout(() => {
+                        if (connected) requestStatus();
+                    }, 1000);
+                });
+
+                client.on('reconnect', () => {
+                    console.log('🔄 Reconnecting...');
+                    updateConnectionStatus('Reconnect...', '#fbbf24');
+                });
+
+                client.on('close', () => {
+                    console.log('❌ Connection closed');
+                    if (connected) {
+                        connected = false;
+                        updateConnectionStatus('TERPUTUS', '#ef4444');
+                        tryNextServer();
+                    }
+                });
+
+                client.on('error', (err) => {
+                    console.error(`MQTT Error on ${server.name}:`, err);
+                    clearTimeout(connectionTimeout);
+                    if (!connected) {
+                        tryNextServer();
+                    }
+                });
+
+                client.on('message', handleMQTTMessage);
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                tryNextServer();
+            }
+        }
+
+        function tryNextServer() {
+            if (client) {
+                try {
+                    client.end(true);
+                } catch (e) {}
+            }
+
+            mqttConfig.currentServerIndex++;
+            connectionAttempts++;
+
+            if (mqttConfig.currentServerIndex < mqttConfig.servers.length) {
+                console.log(`🔄 Mencoba server berikutnya (${mqttConfig.currentServerIndex + 1}/${mqttConfig.servers.length})`);
+                setTimeout(() => connectMQTT(), 2000);
+            } else {
+                console.log('❌ Semua server gagal, akan coba lagi nanti');
+                mqttConfig.currentServerIndex = 0;
+                updateConnectionStatus('GAGAL KONEK', '#ef4444');
+                
+                // Coba lagi setelah 30 detik
+                setTimeout(() => {
+                    connectionAttempts = 0;
+                    connectMQTT();
+                }, 30000);
+            }
+        }
+
+        function subscribeToTopics() {
+            if (!client || !connected) return;
+            
+            const topicsToSubscribe = [
+                topics.sub_sensor,
+                topics.sub_rfid_scan,
+                topics.sub_rfid_status,
+                topics.sub_rfid_history,
+                topics.sub_lamp_status,
+                topics.sub_lamp_all
+            ];
+            
+            topicsToSubscribe.forEach(topic => {
+                client.subscribe(topic, { qos: 0 }, (err) => {
+                    if (!err) {
+                        console.log(`📡 Subscribed: ${topic}`);
+                    } else {
+                        console.error(`Failed to subscribe: ${topic}`);
+                    }
+                });
+            });
+        }
+
+        function updateConnectionStatus(text, color) {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.textContent = '⚡ ' + text;
+            statusEl.style.background = color;
+        }
+
+        // ==================== HANDLE MQTT MESSAGES ====================
+        function handleMQTTMessage(topic, message) {
+            const msg = message.toString();
+            console.log(`📩 [${topic}]: ${msg}`);
+
+            try {
+                if (topic === topics.sub_sensor) {
+                    const data = JSON.parse(msg);
+                    updateSensorData(data);
+                }
+                else if (topic === topics.sub_lamp_status) {
+                    const matches = msg.match(/LAMP(\d+):(ON|OFF)/);
+                    if (matches) {
+                        const lampNum = parseInt(matches[1]);
+                        const state = matches[2] === 'ON';
+                        updateLampStatus(lampNum, state);
+                    }
+                }
+                else if (topic === topics.sub_lamp_all) {
+                    const data = JSON.parse(msg);
+                    updateAllLamps(data);
+                }
+                else if (topic === topics.sub_rfid_scan) {
+                    document.getElementById('rfidUid').textContent = msg;
+                }
+                else if (topic === topics.sub_rfid_status) {
+                    document.getElementById('rfidStatus').textContent = msg;
+                    const statusEl = document.getElementById('rfidStatus');
+                    statusEl.style.animation = 'pulse 0.5s';
+                    setTimeout(() => {
+                        statusEl.style.animation = '';
+                    }, 500);
+                }
+                else if (topic === topics.sub_rfid_history) {
+                    addHistoryItem(msg);
+                }
+
+            } catch (error) {
+                console.error('Error handling message:', error);
+            }
+        }
+
+        // ==================== FUNGSI UPDATE LAMPU ====================
+        function updateLampStatus(lampNum, isOn) {
+            lampStates[lampNum] = isOn;
+            
+            const icon = document.getElementById(`lamp${lampNum}-icon`);
+            const statusEl = document.getElementById(`lamp${lampNum}-status`);
+            const card = document.getElementById(`lamp${lampNum}-card`);
+            
+            if (isOn) {
+                icon.className = 'lamp-icon on';
+                statusEl.textContent = 'ON';
+                statusEl.className = 'lamp-status status-on';
+                card.style.borderLeftColor = '#10b981';
+            } else {
+                icon.className = 'lamp-icon off';
+                statusEl.textContent = 'OFF';
+                statusEl.className = 'lamp-status status-off';
+                card.style.borderLeftColor = '#2a5298';
+            }
+            
+            icon.style.animation = 'pulse 0.5s';
+            setTimeout(() => {
+                icon.style.animation = '';
+            }, 500);
+        }
+
+        function updateAllLamps(data) {
+            if (data.lamp1) updateLampStatus(1, data.lamp1 === 'ON');
+            if (data.lamp2) updateLampStatus(2, data.lamp2 === 'ON');
+            if (data.lamp3) updateLampStatus(3, data.lamp3 === 'ON');
+            if (data.lamp4) updateLampStatus(4, data.lamp4 === 'ON');
+        }
+
+        // ==================== FUNGSI CHART ====================
+        function updateCharts() {
+            chartTempHum.data.labels = sensorData.timestamps;
+            chartTempHum.data.datasets[0].data = sensorData.temp;
+            chartTempHum.data.datasets[1].data = sensorData.hum;
+            chartTempHum.update();
+            
+            chartSoil.data.labels = sensorData.timestamps;
+            chartSoil.data.datasets[0].data = sensorData.soil;
+            chartSoil.update();
+        }
+
+        // ==================== INISIALISASI CHART ====================
+        const ctxTempHum = document.getElementById('chartTempHum').getContext('2d');
+        const ctxSoil = document.getElementById('chartSoil').getContext('2d');
+
+        const chartTempHum = new Chart(ctxTempHum, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'Humidity (%)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 6
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const chartSoil = new Chart(ctxSoil, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Soil Moisture (%)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 6
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // ==================== FUNGSI KONTROL ====================
+        function controlLamp(lampNum, state) {
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung! Menampilkan data offline');
+                return;
+            }
+            
+            const topic = topics[`pub_lamp${lampNum}`];
+            client.publish(topic, state);
+            console.log(`📤 Lamp ${lampNum}: ${state}`);
+            
+            const btn = document.getElementById(`lamp${lampNum}-${state.toLowerCase()}`);
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => btn.style.transform = '', 200);
+        }
+
+        function openDoor() {
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung!');
+                return;
+            }
+            
+            client.publish(topics.pub_doorlock, 'OPEN');
+            console.log('🔓 Door opened');
+            
+            const btn = event.target;
+            btn.textContent = '🔓 MEMBUKA...';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = '🔓 BUKA PINTU';
+                btn.disabled = false;
+            }, 2000);
+        }
+
+        function addCard() {
+            const uid = document.getElementById('cardUid').value.trim();
+            if (!uid) {
+                alert('Masukkan UID kartu!');
+                return;
+            }
+            
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung!');
+                return;
+            }
+            
+            client.publish(topics.pub_rfid_add, uid);
+            document.getElementById('cardUid').value = '';
+            alert(`Kartu ${uid} ditambahkan`);
+        }
+
+        function deleteCard() {
+            const uid = document.getElementById('cardUid').value.trim();
+            if (!uid) {
+                alert('Masukkan UID kartu!');
+                return;
+            }
+            
+            if (!connected || !client) {
+                alert('MQTT tidak terhubung!');
+                return;
+            }
+            
+            client.publish(topics.pub_rfid_delete, uid);
+            document.getElementById('cardUid').value = '';
+            alert(`Kartu ${uid} dihapus`);
+        }
+
+        function requestStatus() {
+            if (!connected || !client) {
+                console.log('Cannot request status - not connected');
+                return;
+            }
+            
+            client.publish(topics.pub_status_request, 'GET');
+            console.log('📤 Status requested');
+        }
+
+        function setTimeRange(hours) {
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            console.log(`📊 Time range: ${hours} jam`);
+        }
+
+        function exportData() {
+            let csv = 'Timestamp,Temperature,Humidity,Soil\n';
+            for (let i = 0; i < sensorData.timestamps.length; i++) {
+                csv += `${sensorData.timestamps[i]},${sensorData.temp[i]},${sensorData.hum[i]},${sensorData.soil[i]}\n`;
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sensor_data_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            alert(`✅ Data diexport: ${sensorData.timestamps.length} records`);
+        }
+
+        function clearAllData() {
+            if (confirm('Hapus semua history dan data grafik?')) {
+                localStorage.removeItem(HISTORY_KEY);
+                localStorage.removeItem(CHART_KEY);
+                
+                sensorData = {
+                    timestamps: [],
+                    temp: [],
+                    hum: [],
+                    soil: []
+                };
+                
+                document.getElementById('historyList').innerHTML = '';
+                updateCharts();
+                console.log('🗑️ All data cleared');
+            }
+        }
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('load', () => {
+            console.log('🚀 Dashboard starting...');
+            
+            // Load saved data
+            loadChartFromStorage();
+            const savedHistory = getHistoryFromStorage();
+            displayHistoryToUI(savedHistory);
+            
+            // Start MQTT connection
+            setTimeout(() => {
+                connectMQTT();
+            }, 1000);
+            
+            // Simulasi data dummy untuk testing
+            setTimeout(() => {
+                if (sensorData.timestamps.length === 0) {
+                    console.log('📊 Generating dummy data for preview');
+                    for (let i = 0; i < 10; i++) {
+                        const dummyData = {
+                            temp: 25 + Math.random() * 5,
+                            hum: 60 + Math.random() * 10,
+                            soil: 40 + Math.random() * 20
+                        };
+                        updateSensorData(dummyData);
+                    }
+                }
+            }, 3000);
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (client && connected) {
+                client.end(true);
+            }
+        });
+    </script>
+</body>
+</html>
