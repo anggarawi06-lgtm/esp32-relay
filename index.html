@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart IoT Dashboard | ESP32 Control</title>
+    <title>Smart IoT Dashboard | ESP32 Control - Water Level Auto Pump</title>
     
     <!-- Libraries -->
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -195,6 +195,11 @@
 
         .btn-water {
             background: linear-gradient(135deg, #00b4d8, #0077b6);
+            color: white;
+        }
+
+        .btn-pump-auto {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: white;
         }
 
@@ -436,6 +441,11 @@
             color: white;
         }
 
+        .badge-pump-auto {
+            background: #8b5cf6;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .grid-4 {
                 grid-template-columns: repeat(2, 1fr);
@@ -473,6 +483,49 @@
             margin-bottom: 5px;
             display: block;
         }
+
+        .config-value {
+            font-size: 0.9em;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .pump-control-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-pump {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-pump-on {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-pump-off {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-pump-auto-mode {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -482,6 +535,7 @@
             <h1>
                 <i>🏠</i> 
                 SMART IoT DASHBOARD
+                <span style="font-size: 0.5em; background: #00b4d8; padding: 5px 10px; border-radius: 50px;">Auto Pump</span>
             </h1>
             <div class="connection-status" id="connectionStatus">
                 ⚡ Menghubungkan...
@@ -514,8 +568,8 @@
                 <div class="lamp-title">LAMPU 1</div>
                 <div class="lamp-status" id="lamp1-status">OFF</div>
                 <div class="btn-group">
-                    <button class="btn btn-on" onclick="controlLamp(1, 'ON')" id="lamp1-on">ON</button>
-                    <button class="btn btn-off" onclick="controlLamp(1, 'OFF')" id="lamp1-off">OFF</button>
+                    <button class="btn btn-on" onclick="controlLamp(1, 'ON')">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(1, 'OFF')">OFF</button>
                 </div>
             </div>
             <div class="lamp-card" id="lamp2-card">
@@ -523,8 +577,8 @@
                 <div class="lamp-title">LAMPU 2</div>
                 <div class="lamp-status" id="lamp2-status">OFF</div>
                 <div class="btn-group">
-                    <button class="btn btn-on" onclick="controlLamp(2, 'ON')" id="lamp2-on">ON</button>
-                    <button class="btn btn-off" onclick="controlLamp(2, 'OFF')" id="lamp2-off">OFF</button>
+                    <button class="btn btn-on" onclick="controlLamp(2, 'ON')">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(2, 'OFF')">OFF</button>
                 </div>
             </div>
             <div class="lamp-card" id="lamp3-card">
@@ -532,8 +586,8 @@
                 <div class="lamp-title">LAMPU 3</div>
                 <div class="lamp-status" id="lamp3-status">OFF</div>
                 <div class="btn-group">
-                    <button class="btn btn-on" onclick="controlLamp(3, 'ON')" id="lamp3-on">ON</button>
-                    <button class="btn btn-off" onclick="controlLamp(3, 'OFF')" id="lamp3-off">OFF</button>
+                    <button class="btn btn-on" onclick="controlLamp(3, 'ON')">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(3, 'OFF')">OFF</button>
                 </div>
             </div>
             <div class="lamp-card" id="lamp4-card">
@@ -541,8 +595,8 @@
                 <div class="lamp-title">LAMPU 4</div>
                 <div class="lamp-status" id="lamp4-status">OFF</div>
                 <div class="btn-group">
-                    <button class="btn btn-on" onclick="controlLamp(4, 'ON')" id="lamp4-on">ON</button>
-                    <button class="btn btn-off" onclick="controlLamp(4, 'OFF')" id="lamp4-off">OFF</button>
+                    <button class="btn btn-on" onclick="controlLamp(4, 'ON')">ON</button>
+                    <button class="btn btn-off" onclick="controlLamp(4, 'OFF')">OFF</button>
                 </div>
             </div>
         </div>
@@ -587,7 +641,13 @@
                 <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); padding: 15px; border-radius: 15px; text-align: center;">
                     <span style="font-size: 0.9em; color: #64748b;">💧 PUMP STATUS</span>
                     <div>
-                        <span class="badge" id="pumpStatus" style="font-size: 1.2em; padding: 8px 20px;">OFF</span>
+                        <span class="badge" id="pumpStatusBadge" style="font-size: 1.2em; padding: 8px 20px;">OFF</span>
+                        <span class="badge" id="pumpModeBadge" style="font-size: 0.9em; margin-left: 10px;">AUTO</span>
+                    </div>
+                    <div class="pump-control-row">
+                        <button class="btn-pump btn-pump-on" onclick="manualPumpControl('ON')">🔛 ON</button>
+                        <button class="btn-pump btn-pump-off" onclick="manualPumpControl('OFF')">🔴 OFF</button>
+                        <button class="btn-pump btn-pump-auto-mode" onclick="manualPumpControl('AUTO')">🤖 AUTO</button>
                     </div>
                 </div>
             </div>
@@ -596,7 +656,7 @@
         <!-- WATER LEVEL CARD -->
         <div class="card">
             <div class="card-title">
-                <span>💧</span> WATER LEVEL MONITOR & AUTO PUMP
+                <span>💧</span> WATER LEVEL MONITOR & AUTO PUMP CONFIGURATION
             </div>
             <div class="grid-2">
                 <div>
@@ -608,10 +668,20 @@
                     <div style="text-align: center; margin-top: 10px;">
                         <span id="waterStatus" style="font-weight: bold;">Normal</span>
                     </div>
+                    <div style="margin-top: 15px; background: #f1f5f9; padding: 10px; border-radius: 10px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                            <span>🔻 LOW: <strong id="displayLowThreshold">30</strong>%</span>
+                            <span>🔺 HIGH: <strong id="displayHighThreshold">80</strong>%</span>
+                        </div>
+                        <div style="margin-top: 5px; background: #e2e8f0; height: 20px; border-radius: 10px; position: relative;">
+                            <div id="thresholdMarker" style="position: absolute; height: 100%; width: 2px; background: #ef4444; left: 30%; border-radius: 2px;"></div>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <div class="water-config-panel">
-                        <h4 style="margin-bottom: 15px; color: #1e3c72;">⚙️ Auto Pump Settings</h4>
+                        <h4 style="margin-bottom: 15px; color: #1e3c72;">⚙️ Pump & Sensor Configuration</h4>
+                        
                         <div class="config-row">
                             <label class="config-label">🔻 Low Level (Pump ON below this)</label>
                             <div class="range-labels">
@@ -619,8 +689,9 @@
                                 <span id="lowValueLabel">30%</span>
                                 <span>100%</span>
                             </div>
-                            <input type="range" id="lowLevelSlider" min="0" max="100" value="30" step="1" onchange="updateWaterConfig()">
+                            <input type="range" id="lowLevelSlider" min="0" max="100" value="30" step="1" onchange="updateWaterConfigUI()">
                         </div>
+                        
                         <div class="config-row">
                             <label class="config-label">🔺 High Level (Pump OFF above this)</label>
                             <div class="range-labels">
@@ -628,18 +699,36 @@
                                 <span id="highValueLabel">80%</span>
                                 <span>100%</span>
                             </div>
-                            <input type="range" id="highLevelSlider" min="0" max="100" value="80" step="1" onchange="updateWaterConfig()">
+                            <input type="range" id="highLevelSlider" min="0" max="100" value="80" step="1" onchange="updateWaterConfigUI()">
                         </div>
+                        
                         <div class="config-row">
-                            <label class="config-label">📐 Min Distance (cm) - Empty</label>
-                            <input type="number" id="minAnalog" class="input-field" placeholder="Min distance" step="1" value="20" onchange="updateWaterConfig()">
+                            <label class="config-label">📏 Min Distance (cm) - Water Full (Sensor minimum)</label>
+                            <input type="number" id="minAnalog" class="input-field" placeholder="Min distance (cm)" step="1" value="20" onchange="updateWaterConfigUI()">
+                            <div class="config-value">Jarak sensor saat air PENUH</div>
                         </div>
+                        
                         <div class="config-row">
-                            <label class="config-label">📐 Max Distance (cm) - Full</label>
-                            <input type="number" id="maxAnalog" class="input-field" placeholder="Max distance" step="1" value="100" onchange="updateWaterConfig()">
+                            <label class="config-label">📏 Max Distance (cm) - Water Empty (Sensor maximum)</label>
+                            <input type="number" id="maxAnalog" class="input-field" placeholder="Max distance (cm)" step="1" value="100" onchange="updateWaterConfigUI()">
+                            <div class="config-value">Jarak sensor saat air KOSONG</div>
                         </div>
+                        
+                        <div class="config-row">
+                            <label class="config-label">📊 Min Device Value (%)</label>
+                            <input type="number" id="minDevice" class="input-field" placeholder="Min device %" step="1" value="0" onchange="updateWaterConfigUI()">
+                        </div>
+                        
+                        <div class="config-row">
+                            <label class="config-label">📊 Max Device Value (%)</label>
+                            <input type="number" id="maxDevice" class="input-field" placeholder="Max device %" step="1" value="100" onchange="updateWaterConfigUI()">
+                        </div>
+                        
                         <button class="btn btn-water" onclick="sendWaterConfig()" style="width: 100%; margin-top: 10px;">
-                            💾 Save Configuration
+                            💾 Save Configuration to ESP32
+                        </button>
+                        <button class="btn btn-primary" onclick="requestConfig()" style="width: 100%; margin-top: 10px;">
+                            🔄 Get Current Config from ESP32
                         </button>
                     </div>
                 </div>
@@ -689,7 +778,7 @@
                     <span>💳</span> CARD MANAGEMENT
                 </div>
                 <div class="input-group">
-                    <input type="text" id="cardUid" class="input-field" placeholder="Masukkan UID kartu">
+                    <input type="text" id="cardUid" class="input-field" placeholder="Masukkan UID kartu (contoh: AB12CD34)">
                     <button class="btn btn-on" onclick="addCard()">Tambah</button>
                     <button class="btn btn-off" onclick="deleteCard()">Hapus</button>
                 </div>
@@ -702,13 +791,13 @@
                 <span>📜</span> ACCESS HISTORY (48 jam terakhir)
             </div>
             <div class="history-container" id="historyList">
-                <!-- History akan ditambahkan via JavaScript -->
+                <div style="text-align: center; color: #64748b; padding: 20px;">Belum ada history</div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p>© 2024 Smart IoT Dashboard | ESP32 + MQTT | Data tersimpan 48 jam di browser | 💧 Water Level Auto Pump</p>
+            <p>© 2024 Smart IoT Dashboard | ESP32 + MQTT | 💧 Auto Pump Control | Konfigurasi Water Level dapat diubah dari dashboard</p>
         </div>
     </div>
 
@@ -729,7 +818,8 @@
             sub_rfid_history: 'esp32/rfid/history',
             sub_lamp_status: 'esp32/lamp/status',
             sub_lamp_all: 'esp32/lamp/all',
-            sub_water_config: 'esp32/water/config',
+            sub_config: 'esp32/config/status',
+            sub_config_set: 'esp32/config/water',
             
             pub_lamp1: 'esp32/lamp1',
             pub_lamp2: 'esp32/lamp2',
@@ -738,13 +828,13 @@
             pub_doorlock: 'esp32/doorlock',
             pub_rfid_add: 'esp32/rfid/add',
             pub_rfid_delete: 'esp32/rfid/delete',
-            pub_status_request: 'esp32/request/status'
+            pub_status_request: 'esp32/request/status',
+            pub_pump_control: 'esp32/pump/manual'
         };
 
         // ==================== GLOBAL VARIABLES ====================
         let client = null;
         let connected = false;
-        let connectionAttempts = 0;
         
         let lampStates = {1: false, 2: false, 3: false, 4: false};
 
@@ -760,6 +850,7 @@
         
         let currentWaterLevel = 0;
         let pumpState = false;
+        let pumpMode = "AUTO";
 
         // ==================== DATA GRAFIK ====================
         const CHART_KEY = 'sensor_chart_data';
@@ -770,6 +861,9 @@
             soil: [],
             water: []
         };
+
+        let currentTimeRange = 48; // jam
+        let chartTempHum, chartWaterSoil;
 
         // ==================== FUNGSI PENYIMPANAN ====================
         function saveChartToStorage() {
@@ -812,7 +906,7 @@
 
         // ==================== HISTORY ====================
         const HISTORY_KEY = 'rfid_history_data';
-        const MAX_HISTORY = 20;
+        const MAX_HISTORY = 50;
 
         function saveHistoryToStorage(historyArray) {
             try {
@@ -833,9 +927,14 @@
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
             
-            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
-            const validHistory = historyArray.filter(item => item.timestamp >= fortyEightHoursAgo);
+            const hoursAgo = Date.now() - (currentTimeRange * 60 * 60 * 1000);
+            const validHistory = historyArray.filter(item => item.timestamp >= hoursAgo);
             validHistory.sort((a, b) => b.timestamp - a.timestamp);
+            
+            if (validHistory.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">Tidak ada history dalam ' + currentTimeRange + ' jam terakhir</div>';
+                return;
+            }
             
             validHistory.forEach(item => {
                 const div = document.createElement('div');
@@ -852,15 +951,15 @@
             let history = getHistoryFromStorage();
             history.unshift({ uid: uid, timeStr: timeStr, timestamp: Date.now() });
             
-            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
-            history = history.filter(item => item.timestamp >= fortyEightHoursAgo);
+            const hoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+            history = history.filter(item => item.timestamp >= hoursAgo);
             
             if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
             saveHistoryToStorage(history);
             displayHistoryToUI(history);
         }
 
-        // ==================== UPDATE UI WATER ====================
+        // ==================== UPDATE UI ====================
         function updateWaterUI(level) {
             const fillHeight = Math.min(100, Math.max(0, level));
             document.getElementById('waterFill').style.height = fillHeight + '%';
@@ -869,40 +968,97 @@
             let status = '';
             let statusColor = '';
             if (level <= waterConfig.lowLevel) {
-                status = '⚠️ LOW - Pump ON';
+                status = '⚠️ LOW WATER - Pump ON';
                 statusColor = '#ef4444';
             } else if (level >= waterConfig.highLevel) {
-                status = '✅ FULL - Pump OFF';
+                status = '✅ HIGH WATER - Pump OFF';
                 statusColor = '#10b981';
             } else {
-                status = '💧 Normal';
+                status = '💧 Normal Level';
                 statusColor = '#3b82f6';
             }
             const statusEl = document.getElementById('waterStatus');
             statusEl.textContent = status;
             statusEl.style.color = statusColor;
+            
+            // Update threshold marker
+            const marker = document.getElementById('thresholdMarker');
+            if (marker) {
+                marker.style.left = waterConfig.lowLevel + '%';
+            }
+            
+            document.getElementById('displayLowThreshold').textContent = waterConfig.lowLevel;
+            document.getElementById('displayHighThreshold').textContent = waterConfig.highLevel;
         }
 
-        function updatePumpUI(state) {
-            const pumpEl = document.getElementById('pumpStatus');
+        function updatePumpUI(state, mode) {
+            const pumpBadge = document.getElementById('pumpStatusBadge');
+            const modeBadge = document.getElementById('pumpModeBadge');
+            
             if (state === 'ON' || state === true) {
-                pumpEl.textContent = '🟢 PUMP ON';
-                pumpEl.className = 'badge badge-pump-on';
-                pumpEl.style.background = '#10b981';
+                pumpBadge.textContent = '🟢 PUMP ON';
+                pumpBadge.className = 'badge badge-pump-on';
+                pumpBadge.style.background = '#10b981';
             } else {
-                pumpEl.textContent = '🔴 PUMP OFF';
-                pumpEl.className = 'badge badge-pump-off';
-                pumpEl.style.background = '#ef4444';
+                pumpBadge.textContent = '🔴 PUMP OFF';
+                pumpBadge.className = 'badge badge-pump-off';
+                pumpBadge.style.background = '#ef4444';
+            }
+            
+            if (mode === 'AUTO' || mode === true) {
+                modeBadge.textContent = '🤖 AUTO MODE';
+                modeBadge.className = 'badge badge-pump-auto';
+            } else {
+                modeBadge.textContent = '👆 MANUAL MODE';
+                modeBadge.className = 'badge';
+                modeBadge.style.background = '#f59e0b';
             }
         }
 
         function updateWaterConfigUI() {
-            document.getElementById('lowLevelSlider').value = waterConfig.lowLevel;
-            document.getElementById('highLevelSlider').value = waterConfig.highLevel;
+            waterConfig.lowLevel = parseInt(document.getElementById('lowLevelSlider').value);
+            waterConfig.highLevel = parseInt(document.getElementById('highLevelSlider').value);
+            waterConfig.minAnalog = parseInt(document.getElementById('minAnalog').value);
+            waterConfig.maxAnalog = parseInt(document.getElementById('maxAnalog').value);
+            waterConfig.minDevice = parseInt(document.getElementById('minDevice').value);
+            waterConfig.maxDevice = parseInt(document.getElementById('maxDevice').value);
+            
             document.getElementById('lowValueLabel').textContent = waterConfig.lowLevel + '%';
             document.getElementById('highValueLabel').textContent = waterConfig.highLevel + '%';
+            
+            if (waterConfig.lowLevel >= waterConfig.highLevel) {
+                document.getElementById('lowLevelSlider').value = waterConfig.highLevel - 10;
+                updateWaterConfigUI();
+            }
+            
+            if (waterConfig.minAnalog >= waterConfig.maxAnalog) {
+                document.getElementById('minAnalog').value = waterConfig.maxAnalog - 10;
+                updateWaterConfigUI();
+            }
+            
+            updateWaterUI(currentWaterLevel);
+        }
+
+        function applyConfigFromESP32(config) {
+            if (config.low_threshold !== undefined) waterConfig.lowLevel = config.low_threshold;
+            if (config.high_threshold !== undefined) waterConfig.highLevel = config.high_threshold;
+            if (config.min_analog !== undefined) waterConfig.minAnalog = config.min_analog;
+            if (config.max_analog !== undefined) waterConfig.maxAnalog = config.max_analog;
+            if (config.min_device !== undefined) waterConfig.minDevice = config.min_device;
+            if (config.max_device !== undefined) waterConfig.maxDevice = config.max_device;
+            
+            document.getElementById('lowLevelSlider').value = waterConfig.lowLevel;
+            document.getElementById('highLevelSlider').value = waterConfig.highLevel;
             document.getElementById('minAnalog').value = waterConfig.minAnalog;
             document.getElementById('maxAnalog').value = waterConfig.maxAnalog;
+            document.getElementById('minDevice').value = waterConfig.minDevice;
+            document.getElementById('maxDevice').value = waterConfig.maxDevice;
+            
+            document.getElementById('lowValueLabel').textContent = waterConfig.lowLevel + '%';
+            document.getElementById('highValueLabel').textContent = waterConfig.highLevel + '%';
+            
+            updateWaterUI(currentWaterLevel);
+            console.log('Config applied from ESP32:', waterConfig);
         }
 
         // ==================== UPDATE SENSOR DATA ====================
@@ -915,21 +1071,16 @@
             currentWaterLevel = data.water_level || 0;
             updateWaterUI(currentWaterLevel);
             
-            if (data.pump) updatePumpUI(data.pump);
+            if (data.pump_status) {
+                pumpState = (data.pump_status === 'ON');
+                pumpMode = data.pump_mode || 'AUTO';
+                updatePumpUI(pumpState, pumpMode);
+            }
             
-            if (data.low_level) waterConfig.lowLevel = data.low_level;
-            if (data.high_level) waterConfig.highLevel = data.high_level;
+            if (data.low_threshold) waterConfig.lowLevel = data.low_threshold;
+            if (data.high_threshold) waterConfig.highLevel = data.high_threshold;
             if (data.min_analog) waterConfig.minAnalog = data.min_analog;
             if (data.max_analog) waterConfig.maxAnalog = data.max_analog;
-            updateWaterConfigUI();
-            
-            ['temp', 'hum', 'soil', 'waterLevel'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.style.animation = 'pulse 0.3s';
-                    setTimeout(() => el.style.animation = '', 300);
-                }
-            });
             
             const timeStr = new Date().toLocaleTimeString();
             sensorData.timestamps.push(timeStr);
@@ -938,7 +1089,7 @@
             sensorData.soil.push(data.soil);
             sensorData.water.push(data.water_level || 0);
             
-            if (sensorData.timestamps.length > 100) {
+            if (sensorData.timestamps.length > 200) {
                 sensorData.timestamps.shift();
                 sensorData.temp.shift();
                 sensorData.hum.shift();
@@ -1016,6 +1167,7 @@
                     updateConnectionStatus('TERHUBUNG', '#10b981');
                     subscribeToTopics();
                     setTimeout(requestStatus, 1000);
+                    setTimeout(requestConfig, 2000);
                 });
 
                 client.on('reconnect', () => {
@@ -1045,8 +1197,13 @@
         function subscribeToTopics() {
             if (!client || !connected) return;
             const topicsToSubscribe = [
-                topics.sub_sensor, topics.sub_rfid_scan, topics.sub_rfid_status,
-                topics.sub_rfid_history, topics.sub_lamp_status, topics.sub_lamp_all
+                topics.sub_sensor, 
+                topics.sub_rfid_scan, 
+                topics.sub_rfid_status,
+                topics.sub_rfid_history, 
+                topics.sub_lamp_status, 
+                topics.sub_lamp_all,
+                topics.sub_config
             ];
             topicsToSubscribe.forEach(topic => {
                 client.subscribe(topic, (err) => {
@@ -1090,6 +1247,10 @@
                 else if (topic === topics.sub_rfid_history) {
                     addHistoryItem(msg, new Date().toLocaleTimeString());
                 }
+                else if (topic === topics.sub_config) {
+                    const data = JSON.parse(msg);
+                    applyConfigFromESP32(data);
+                }
             } catch (error) {
                 console.error('Error handling message:', error);
             }
@@ -1106,16 +1267,17 @@
             if (!connected || !client) { alert('MQTT tidak terhubung!'); return; }
             client.publish(topics.pub_doorlock, 'OPEN');
             const btn = event.target;
+            const originalText = btn.textContent;
             btn.textContent = '🔓 MEMBUKA...';
             btn.disabled = true;
             setTimeout(() => {
-                btn.textContent = '🔓 BUKA PINTU';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }, 2000);
         }
 
         function addCard() {
-            const uid = document.getElementById('cardUid').value.trim();
+            const uid = document.getElementById('cardUid').value.trim().toUpperCase();
             if (!uid) { alert('Masukkan UID kartu!'); return; }
             if (!connected || !client) { alert('MQTT tidak terhubung!'); return; }
             client.publish(topics.pub_rfid_add, uid);
@@ -1124,7 +1286,7 @@
         }
 
         function deleteCard() {
-            const uid = document.getElementById('cardUid').value.trim();
+            const uid = document.getElementById('cardUid').value.trim().toUpperCase();
             if (!uid) { alert('Masukkan UID kartu!'); return; }
             if (!connected || !client) { alert('MQTT tidak terhubung!'); return; }
             client.publish(topics.pub_rfid_delete, uid);
@@ -1137,23 +1299,22 @@
             client.publish(topics.pub_status_request, 'GET');
         }
 
-        // ==================== WATER CONFIGURATION ====================
-        function updateWaterConfig() {
-            waterConfig.lowLevel = parseInt(document.getElementById('lowLevelSlider').value);
-            waterConfig.highLevel = parseInt(document.getElementById('highLevelSlider').value);
-            waterConfig.minAnalog = parseInt(document.getElementById('minAnalog').value);
-            waterConfig.maxAnalog = parseInt(document.getElementById('maxAnalog').value);
-            
-            document.getElementById('lowValueLabel').textContent = waterConfig.lowLevel + '%';
-            document.getElementById('highValueLabel').textContent = waterConfig.highLevel + '%';
-            
-            if (waterConfig.lowLevel >= waterConfig.highLevel) {
-                alert('Low level harus lebih kecil dari High level!');
-                document.getElementById('lowLevelSlider').value = waterConfig.highLevel - 10;
-                updateWaterConfig();
+        function requestConfig() {
+            if (!connected || !client) return;
+            client.publish(topics.pub_status_request, 'GET');
+        }
+
+        function manualPumpControl(command) {
+            if (!connected || !client) { alert('MQTT tidak terhubung!'); return; }
+            client.publish(topics.pub_pump_control, command);
+            if (command === 'AUTO') {
+                alert('Pump mode set to AUTO');
+            } else {
+                alert(`Pump turned ${command} manually`);
             }
         }
 
+        // ==================== WATER CONFIGURATION ====================
         function sendWaterConfig() {
             if (!connected || !client) { alert('MQTT tidak terhubung!'); return; }
             
@@ -1162,22 +1323,24 @@
                 high: waterConfig.highLevel,
                 minAnalog: waterConfig.minAnalog,
                 maxAnalog: waterConfig.maxAnalog,
-                minDevice: 0,
-                maxDevice: 100
+                minDevice: waterConfig.minDevice,
+                maxDevice: waterConfig.maxDevice
             };
             
-            client.publish(topics.sub_water_config, JSON.stringify(config));
-            alert('Water config sent to ESP32');
+            client.publish(topics.sub_config_set, JSON.stringify(config));
+            alert('Configuration sent to ESP32');
         }
 
         function setTimeRange(hours) {
+            currentTimeRange = hours;
             document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
+            displayHistoryToUI(getHistoryFromStorage());
             console.log(`📊 Time range: ${hours} jam`);
         }
 
         function exportData() {
-            let csv = 'Timestamp,Temperature,Humidity,Soil Moisture,Water Level\n';
+            let csv = 'Timestamp,Temperature (°C),Humidity (%),Soil Moisture (%),Water Level (%)\n';
             for (let i = 0; i < sensorData.timestamps.length; i++) {
                 csv += `${sensorData.timestamps[i]},${sensorData.temp[i]},${sensorData.hum[i]},${sensorData.soil[i]},${sensorData.water[i]}\n`;
             }
@@ -1187,6 +1350,7 @@
             a.href = url;
             a.download = `sensor_data_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
+            window.URL.revokeObjectURL(url);
             alert(`✅ Data diexport: ${sensorData.timestamps.length} records`);
         }
 
@@ -1195,49 +1359,57 @@
                 localStorage.removeItem(HISTORY_KEY);
                 localStorage.removeItem(CHART_KEY);
                 sensorData = { timestamps: [], temp: [], hum: [], soil: [], water: [] };
-                document.getElementById('historyList').innerHTML = '';
+                document.getElementById('historyList').innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">Belum ada history</div>';
                 updateCharts();
                 console.log('🗑️ All data cleared');
             }
         }
 
         // ==================== INIT CHARTS ====================
-        const ctxTempHum = document.getElementById('chartTempHum').getContext('2d');
-        const ctxWaterSoil = document.getElementById('chartWaterSoil').getContext('2d');
+        function initCharts() {
+            const ctxTempHum = document.getElementById('chartTempHum').getContext('2d');
+            const ctxWaterSoil = document.getElementById('chartWaterSoil').getContext('2d');
 
-        let chartTempHum = new Chart(ctxTempHum, {
-            type: 'line', data: { labels: [], datasets: [
-                { label: 'Temperature (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, pointRadius: 3 },
-                { label: 'Humidity (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, fill: true, pointRadius: 3 }
-            ] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
-        });
+            chartTempHum = new Chart(ctxTempHum, {
+                type: 'line', 
+                data: { labels: [], datasets: [
+                    { label: 'Temperature (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, pointRadius: 3 },
+                    { label: 'Humidity (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, fill: true, pointRadius: 3 }
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+            });
 
-        let chartWaterSoil = new Chart(ctxWaterSoil, {
-            type: 'line', data: { labels: [], datasets: [
-                { label: 'Water Level (%)', data: [], borderColor: '#00b4d8', backgroundColor: 'rgba(0,180,216,0.1)', tension: 0.4, fill: true, pointRadius: 3 },
-                { label: 'Soil Moisture (%)', data: [], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true, pointRadius: 3 }
-            ] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, max: 100 } } }
-        });
+            chartWaterSoil = new Chart(ctxWaterSoil, {
+                type: 'line', 
+                data: { labels: [], datasets: [
+                    { label: 'Water Level (%)', data: [], borderColor: '#00b4d8', backgroundColor: 'rgba(0,180,216,0.1)', tension: 0.4, fill: true, pointRadius: 3 },
+                    { label: 'Soil Moisture (%)', data: [], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true, pointRadius: 3 }
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+        }
 
         // ==================== INITIALIZATION ====================
         window.addEventListener('load', () => {
             console.log('🚀 Dashboard starting...');
+            initCharts();
             loadChartFromStorage();
             displayHistoryToUI(getHistoryFromStorage());
             connectMQTT();
             
-            setTimeout(() => {
-                if (sensorData.timestamps.length === 0) {
-                    for (let i = 0; i < 10; i++) {
-                        updateSensorData({ temp: 25 + Math.random() * 5, hum: 60 + Math.random() * 10, soil: 40 + Math.random() * 20, water_level: 30 + Math.random() * 50, pump: i % 2 === 0 ? 'ON' : 'OFF' });
-                    }
-                }
-            }, 2000);
+            // Set default values
+            document.getElementById('lowLevelSlider').value = waterConfig.lowLevel;
+            document.getElementById('highLevelSlider').value = waterConfig.highLevel;
+            document.getElementById('minAnalog').value = waterConfig.minAnalog;
+            document.getElementById('maxAnalog').value = waterConfig.maxAnalog;
+            document.getElementById('minDevice').value = waterConfig.minDevice;
+            document.getElementById('maxDevice').value = waterConfig.maxDevice;
+            updateWaterConfigUI();
         });
 
-        window.addEventListener('beforeunload', () => { if (client && connected) client.end(true); });
+        window.addEventListener('beforeunload', () => { 
+            if (client && connected) client.end(true); 
+        });
     </script>
 </body>
 </html>
