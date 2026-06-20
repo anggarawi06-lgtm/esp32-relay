@@ -1,128 +1,178 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Smart IoT Dashboard</title>
-  <!-- MQTT & Chart.js -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Smart IoT Dashboard Pro</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background: linear-gradient(135deg, #0b1a33, #1a2a4a); min-height: 100vh; padding: 16px; }
-    .container { max-width: 1300px; margin: 0 auto; }
+    /* ===== RESET & VARIABLES ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    body {
+      background: #0b1120;
+      color: #e2e8f0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 1440px; margin: 0 auto; }
 
-    /* Header */
+    /* ===== HEADER ===== */
     .header {
-      background: rgba(255,255,255,0.95);
-      border-radius: 20px;
-      padding: 18px 24px;
-      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      gap: 16px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+      padding: 16px 24px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 24px;
     }
-    .header h1 { color: #1e3c72; font-size: 1.6rem; display: flex; align-items: center; gap: 8px; }
-    .header h1 small { font-size: 0.8rem; background: #2563eb; color: white; padding: 2px 12px; border-radius: 30px; }
-    .conn-status { padding: 6px 18px; border-radius: 50px; font-weight: 600; background: #fbbf24; color: #1e3c72; transition: 0.2s; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header-left h1 span { color: #38bdf8; }
+    .badge-esp { background: #1e293b; padding: 4px 14px; border-radius: 30px; font-size: 0.7rem; color: #94a3b8; border: 1px solid #334155; }
+    .conn-status {
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: #fbbf24;
+      color: #0b1120;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .conn-status.online { background: #10b981; color: #fff; }
+    .conn-status.offline { background: #ef4444; color: #fff; }
+    .conn-status .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block; }
 
-    /* Grids */
-    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    /* ===== TIME FILTER ===== */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      background: rgba(255,255,255,0.04);
+      padding: 12px 20px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 24px;
+    }
+    .filter-bar label { font-weight: 500; font-size: 0.85rem; color: #94a3b8; margin-right: 8px; }
+    .filter-btn {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 30px;
+      background: #1e293b;
+      color: #94a3b8;
+      font-weight: 500;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px solid transparent;
+    }
+    .filter-btn:hover { background: #334155; color: #f1f5f9; }
+    .filter-btn.active { background: #2563eb; color: #fff; border-color: #3b82f6; box-shadow: 0 0 20px rgba(37,99,235,0.2); }
 
-    /* Cards */
+    /* ===== GRID LAYOUT ===== */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 24px; }
+
+    /* ===== CARDS ===== */
     .card {
-      background: rgba(255,255,255,0.95);
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
       transition: 0.2s;
     }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
     .card-title {
-      color: #1e3c72;
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #94a3b8;
       margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e2e8f0;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
+    .card-title .icon { font-size: 1.2rem; }
 
-    /* Lamp */
-    .lamp-box {
-      background: white;
-      border-radius: 14px;
-      padding: 14px;
+    /* Sensor value */
+    .sensor-value { font-size: 2.4rem; font-weight: 700; line-height: 1.2; color: #f1f5f9; }
+    .sensor-unit { font-size: 0.85rem; color: #64748b; font-weight: 400; margin-left: 4px; }
+    .sensor-label { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+    /* Lamp card */
+    .lamp-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      padding: 16px;
       text-align: center;
-      border-left: 4px solid #2a5298;
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: 0.2s;
     }
+    .lamp-card:hover { border-color: rgba(255,255,255,0.12); }
     .lamp-icon { font-size: 2.4rem; transition: 0.2s; }
-    .lamp-icon.on { color: #fbbf24; text-shadow: 0 0 16px #fbbf24; }
-    .lamp-icon.off { color: #9ca3af; }
-    .lamp-title { font-weight: 600; margin: 6px 0 8px; }
+    .lamp-icon.on { color: #fbbf24; filter: drop-shadow(0 0 12px rgba(251,191,36,0.3)); }
+    .lamp-icon.off { color: #475569; }
+    .lamp-title { font-weight: 600; margin: 6px 0 8px; font-size: 0.9rem; }
     .lamp-status {
-      font-size: 0.8rem;
-      padding: 4px 12px;
+      font-size: 0.7rem;
+      padding: 3px 12px;
       border-radius: 30px;
       display: inline-block;
-      margin-bottom: 10px;
       font-weight: 600;
+      margin-bottom: 10px;
     }
-    .lamp-status.on { background: #10b981; color: white; }
-    .lamp-status.off { background: #ef4444; color: white; }
-    .btn-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .lamp-status.on { background: #10b981; color: #fff; }
+    .lamp-status.off { background: #ef4444; color: #fff; }
+    .btn-group { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
     .btn {
-      padding: 8px 18px;
+      padding: 6px 16px;
       border: none;
       border-radius: 30px;
       font-weight: 600;
+      font-size: 0.75rem;
       cursor: pointer;
       transition: 0.2s;
-      font-size: 0.85rem;
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
-    .btn-on { background: #10b981; color: white; }
-    .btn-off { background: #ef4444; color: white; }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-water { background: #0e7490; color: white; }
-    .btn-sm { padding: 4px 14px; font-size: 0.75rem; }
+    .btn-on { background: #10b981; color: #fff; }
+    .btn-off { background: #ef4444; color: #fff; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-water { background: #0e7490; color: #fff; }
+    .btn-sm { padding: 4px 12px; font-size: 0.7rem; }
 
-    /* Sensor cards */
-    .sensor-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
-    .sensor-item {
-      background: #f1f5f9;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-    }
-    .sensor-value { font-size: 2rem; font-weight: 700; color: #1e3c72; }
-    .sensor-unit { font-size: 0.8rem; color: #64748b; }
-    .sensor-label { font-size: 0.8rem; color: #475569; margin-top: 4px; font-weight: 600; }
-
-    /* Power */
+    /* Power grid */
     .power-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
     .power-item {
-      background: #1e293b;
-      border-radius: 12px;
-      padding: 10px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 12px;
       text-align: center;
-      color: white;
+      border: 1px solid rgba(255,255,255,0.04);
     }
-    .power-value { font-size: 1.4rem; font-weight: 700; color: #fbbf24; }
-    .power-unit { font-size: 0.7rem; color: #94a3b8; }
-    .power-label { font-size: 0.7rem; color: #94a3b8; margin-top: 3px; }
+    .power-value { font-size: 1.5rem; font-weight: 700; color: #fbbf24; }
+    .power-unit { font-size: 0.7rem; color: #64748b; }
+    .power-label { font-size: 0.65rem; color: #64748b; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
 
-    /* Water level */
+    /* Water level visual */
     .water-container {
-      background: #e2e8f0;
+      background: #1e293b;
       border-radius: 16px;
-      height: 180px;
+      height: 200px;
       position: relative;
       overflow: hidden;
       margin-bottom: 12px;
@@ -132,72 +182,158 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background: linear-gradient(135deg, #00b4d8, #0077b6);
-      transition: height 0.3s ease;
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      transition: height 0.4s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1.6rem;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.8rem;
     }
+    .water-fill .pct { text-shadow: 0 2px 12px rgba(0,0,0,0.4); }
 
-    /* Calibration form */
-    .cal-group { margin-bottom: 12px; }
-    .cal-group label { display: block; font-weight: 600; font-size: 0.85rem; color: #1e3c72; margin-bottom: 3px; }
-    .cal-group input { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; }
-    .cal-group input[type="range"] { padding: 0; height: 6px; }
-    .range-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; }
-    .btn-group-hor { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-    .btn-group-hor .btn { flex: 1; text-align: center; }
+    /* Threshold marker */
+    .threshold-bar {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 10px;
+      position: relative;
+    }
+    .threshold-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; }
+    .threshold-track {
+      background: #334155;
+      height: 6px;
+      border-radius: 6px;
+      margin-top: 6px;
+      position: relative;
+    }
+    .threshold-marker {
+      position: absolute;
+      top: -4px;
+      width: 3px;
+      height: 14px;
+      border-radius: 2px;
+    }
+    .threshold-marker.low { background: #ef4444; }
+    .threshold-marker.high { background: #10b981; }
 
     /* RFID */
     .rfid-box {
       background: #1e293b;
-      border-radius: 12px;
-      padding: 14px;
-      color: white;
+      border-radius: 14px;
+      padding: 14px 18px;
     }
     .rfid-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #334155; }
+    .rfid-row:last-child { border-bottom: none; }
+    .rfid-label { color: #94a3b8; font-size: 0.85rem; }
     .rfid-value { color: #fbbf24; font-family: monospace; font-weight: 600; }
 
     /* History */
     .history-box {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 8px;
-      max-height: 180px;
+      max-height: 200px;
       overflow-y: auto;
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 8px;
     }
+    .history-box::-webkit-scrollbar { width: 4px; }
+    .history-box::-webkit-scrollbar-track { background: transparent; }
+    .history-box::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     .history-item {
-      background: white;
-      padding: 8px 12px;
+      background: rgba(255,255,255,0.04);
+      padding: 8px 14px;
       margin: 4px 0;
-      border-radius: 8px;
-      border-left: 3px solid #2563eb;
+      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       font-size: 0.85rem;
+      border-left: 3px solid #2563eb;
     }
+    .history-item .uid { font-family: monospace; font-weight: 600; }
+    .history-item .time { color: #94a3b8; font-size: 0.75rem; }
 
-    /* Misc */
-    .flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; }
-    .badge-on { background: #10b981; color: white; }
-    .badge-off { background: #ef4444; color: white; }
-    .badge-auto { background: #8b5cf6; color: white; }
+    /* Charts */
+    .chart-container { height: 220px; width: 100%; margin-top: 8px; }
+    .chart-container.power-chart { height: 200px; }
 
-    .footer { text-align: center; margin-top: 24px; color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+    /* Input */
+    .input-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .input-field {
+      flex: 2;
+      padding: 10px 16px;
+      border: 1px solid #334155;
+      border-radius: 30px;
+      background: #1e293b;
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      outline: none;
+      transition: 0.2s;
+      min-width: 140px;
+    }
+    .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .input-field::placeholder { color: #64748b; }
 
-    /* Chart containers */
-    .chart-container { height: 200px; width: 100%; margin-top: 10px; }
+    /* Calibration form */
+    .cal-group { margin-bottom: 14px; }
+    .cal-group label { display: block; font-weight: 500; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; }
+    .cal-group input[type="number"] {
+      width: 100%;
+      padding: 8px 14px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #1e293b;
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      outline: none;
+      transition: 0.2s;
+    }
+    .cal-group input[type="number"]:focus { border-color: #3b82f6; }
+    .cal-group input[type="range"] {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      background: #334155;
+      border-radius: 4px;
+      outline: none;
+    }
+    .cal-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(59,130,246,0.3);
+    }
+    .range-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+    .cal-msg { text-align: center; font-size: 0.85rem; margin-top: 10px; min-height: 24px; }
+    .cal-msg.success { color: #10b981; }
+    .cal-msg.error { color: #ef4444; }
 
+    /* Pump status */
+    .pump-control {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+    .pump-badge { display: inline-block; padding: 4px 14px; border-radius: 30px; font-weight: 600; font-size: 0.8rem; }
+    .pump-badge.on { background: #10b981; color: #fff; }
+    .pump-badge.off { background: #ef4444; color: #fff; }
+    .pump-badge.auto { background: #8b5cf6; color: #fff; }
+
+    /* Footer */
+    .footer { text-align: center; margin-top: 32px; color: #475569; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 20px; }
+
+    /* Responsive */
+    @media (max-width: 1024px) { .grid-4 { grid-template-columns: repeat(2,1fr); } .grid-3 { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 768px) {
-      .grid-4 { grid-template-columns: 1fr 1fr; }
-      .grid-2 { grid-template-columns: 1fr; }
-      .sensor-grid { grid-template-columns: 1fr 1fr; }
-      .power-grid { grid-template-columns: 1fr 1fr; }
-      .header h1 { font-size: 1.2rem; }
+      .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .power-grid { grid-template-columns: repeat(2,1fr); }
+      .header { flex-direction: column; align-items: stretch; text-align: center; }
+      .filter-bar { justify-content: center; }
     }
   </style>
 </head>
@@ -205,53 +341,70 @@
 <div class="container">
 
   <!-- HEADER -->
-  <div class="header">
-    <h1>🏠 SMART IoT <small>ESP32</small></h1>
-    <div class="conn-status" id="connStatus">⚡ Menghubungkan...</div>
+  <header class="header">
+    <div class="header-left">
+      <h1>⚡<span>Smart</span>IoT</h1>
+      <span class="badge-esp">ESP32 v3.0</span>
+    </div>
+    <div class="conn-status" id="connStatus">
+      <span class="dot"></span> Menghubungkan...
+    </div>
+  </header>
+
+  <!-- TIME FILTER -->
+  <div class="filter-bar">
+    <label>📊 Tampilkan:</label>
+    <button class="filter-btn" data-hours="1">1 Jam</button>
+    <button class="filter-btn" data-hours="5">5 Jam</button>
+    <button class="filter-btn" data-hours="12">12 Jam</button>
+    <button class="filter-btn active" data-hours="24">24 Jam</button>
+    <button class="filter-btn" data-hours="48">48 Jam</button>
+    <div style="flex:1; text-align:right; font-size:0.8rem; color:#64748b;">
+      <span id="dataCount">0</span> data points
+    </div>
   </div>
 
-  <!-- LAMP CONTROL (4) -->
+  <!-- LAMPU 4 -->
   <div class="grid-4" id="lampContainer">
-    <!-- akan di generate oleh JS, tapi kita buat statis agar cepat -->
-    <div class="lamp-box" data-lamp="1"><div class="lamp-icon off" id="lampIcon1">💡</div><div class="lamp-title">LAMPU 1</div><div class="lamp-status off" id="lampStatus1">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(1,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(1,'OFF')">OFF</button></div></div>
-    <div class="lamp-box" data-lamp="2"><div class="lamp-icon off" id="lampIcon2">💡</div><div class="lamp-title">LAMPU 2</div><div class="lamp-status off" id="lampStatus2">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(2,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(2,'OFF')">OFF</button></div></div>
-    <div class="lamp-box" data-lamp="3"><div class="lamp-icon off" id="lampIcon3">💡</div><div class="lamp-title">LAMPU 3</div><div class="lamp-status off" id="lampStatus3">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(3,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(3,'OFF')">OFF</button></div></div>
-    <div class="lamp-box" data-lamp="4"><div class="lamp-icon off" id="lampIcon4">💡</div><div class="lamp-title">LAMPU 4</div><div class="lamp-status off" id="lampStatus4">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(4,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(4,'OFF')">OFF</button></div></div>
+    <div class="lamp-card" data-lamp="1"><div class="lamp-icon off" id="lampIcon1">💡</div><div class="lamp-title">LAMPU 1</div><div class="lamp-status off" id="lampStatus1">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(1,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(1,'OFF')">OFF</button></div></div>
+    <div class="lamp-card" data-lamp="2"><div class="lamp-icon off" id="lampIcon2">💡</div><div class="lamp-title">LAMPU 2</div><div class="lamp-status off" id="lampStatus2">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(2,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(2,'OFF')">OFF</button></div></div>
+    <div class="lamp-card" data-lamp="3"><div class="lamp-icon off" id="lampIcon3">💡</div><div class="lamp-title">LAMPU 3</div><div class="lamp-status off" id="lampStatus3">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(3,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(3,'OFF')">OFF</button></div></div>
+    <div class="lamp-card" data-lamp="4"><div class="lamp-icon off" id="lampIcon4">💡</div><div class="lamp-title">LAMPU 4</div><div class="lamp-status off" id="lampStatus4">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(4,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(4,'OFF')">OFF</button></div></div>
   </div>
 
-  <!-- SENSORS + PUMP/DOOR -->
+  <!-- SENSOR + DOOR/PUMP -->
   <div class="grid-2">
     <div class="card">
-      <div class="card-title">🌡️ SENSORS</div>
-      <div class="sensor-grid">
-        <div class="sensor-item"><div class="sensor-value" id="sTemp">--</div><div class="sensor-unit">°C</div><div class="sensor-label">Temperature</div></div>
-        <div class="sensor-item"><div class="sensor-value" id="sHum">--</div><div class="sensor-unit">%</div><div class="sensor-label">Humidity</div></div>
-        <div class="sensor-item"><div class="sensor-value" id="sSoil">--</div><div class="sensor-unit">%</div><div class="sensor-label">Soil Moisture</div></div>
-        <div class="sensor-item"><div class="sensor-value" id="sWater">--</div><div class="sensor-unit">%</div><div class="sensor-label">Water Level</div></div>
+      <div class="card-title"><span class="icon">🌡️</span> Sensor Real-time</div>
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px;">
+        <div><div class="sensor-value" id="sTemp">--<span class="sensor-unit">°C</span></div><div class="sensor-label">Temperature</div></div>
+        <div><div class="sensor-value" id="sHum">--<span class="sensor-unit">%</span></div><div class="sensor-label">Humidity</div></div>
+        <div><div class="sensor-value" id="sSoil">--<span class="sensor-unit">%</span></div><div class="sensor-label">Soil Moisture</div></div>
+        <div><div class="sensor-value" id="sWater">--<span class="sensor-unit">%</span></div><div class="sensor-label">Water Level</div></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">🚪 DOOR & PUMP</div>
-      <button class="btn btn-primary" onclick="openDoor()" style="width:100%; padding:14px; margin-bottom:14px;">🔓 BUKA PINTU</button>
-      <div style="background:#f1f5f9; padding:12px; border-radius:12px; text-align:center;">
-        <div style="display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div class="card-title"><span class="icon">🚪</span> Kontrol</div>
+      <button class="btn btn-primary" onclick="openDoor()" style="width:100%; padding:14px; margin-bottom:16px;">🔓 BUKA PINTU</button>
+      <div class="pump-control">
+        <div style="display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap;">
           <span>💧 PUMP</span>
-          <span class="badge badge-off" id="pumpStatusBadge">OFF</span>
-          <span class="badge badge-auto" id="pumpModeBadge">AUTO</span>
+          <span class="pump-badge off" id="pumpStatusBadge">OFF</span>
+          <span class="pump-badge auto" id="pumpModeBadge">AUTO</span>
         </div>
-        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
           <button class="btn btn-on" style="flex:1;" onclick="pumpControl('ON')">ON</button>
           <button class="btn btn-off" style="flex:1;" onclick="pumpControl('OFF')">OFF</button>
-          <button class="btn" style="flex:1; background:#8b5cf6; color:white;" onclick="pumpControl('AUTO')">AUTO</button>
+          <button class="btn" style="flex:1; background:#8b5cf6; color:#fff;" onclick="pumpControl('AUTO')">AUTO</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PZEM POWER -->
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-title">⚡ POWER <button class="btn btn-off btn-sm" onclick="resetEnergy()">Reset Energy</button></div>
-    <div class="power-grid" id="powerGrid">
+  <!-- POWER MONITOR -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-title"><span class="icon">⚡</span> Power Monitor <button class="btn btn-off btn-sm" onclick="resetEnergy()" style="margin-left:auto;">Reset Energy</button></div>
+    <div class="power-grid">
       <div class="power-item"><div class="power-value" id="pzV">--</div><div class="power-unit">V</div><div class="power-label">Voltage</div></div>
       <div class="power-item"><div class="power-value" id="pzA">--</div><div class="power-unit">A</div><div class="power-label">Current</div></div>
       <div class="power-item"><div class="power-value" id="pzW">--</div><div class="power-unit">W</div><div class="power-label">Power</div></div>
@@ -259,73 +412,73 @@
       <div class="power-item"><div class="power-value" id="pzF">--</div><div class="power-unit">Hz</div><div class="power-label">Frequency</div></div>
       <div class="power-item"><div class="power-value" id="pzPF">--</div><div class="power-unit">PF</div><div class="power-label">Power Factor</div></div>
     </div>
-    <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:6px;" id="pzStatus">🟢 PZEM Connected</div>
+    <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:8px;" id="pzStatus">🟢 PZEM Connected</div>
   </div>
 
   <!-- WATER LEVEL + CALIBRATION -->
-  <div class="grid-2" style="margin-bottom:20px;">
+  <div class="grid-2" style="margin-bottom:24px;">
     <div class="card">
-      <div class="card-title">💧 WATER LEVEL</div>
+      <div class="card-title"><span class="icon">💧</span> Water Level</div>
       <div class="water-container">
-        <div class="water-fill" id="waterFill" style="height:0%"><span id="waterPercent">0%</span></div>
+        <div class="water-fill" id="waterFill" style="height:0%;"><span class="pct" id="waterPercent">0%</span></div>
       </div>
-      <div id="waterAlert" style="text-align:center; font-weight:bold; margin-bottom:10px;">Menunggu data...</div>
-      <div style="background:#f1f5f9; padding:12px; border-radius:12px;">
-        <div style="display:flex; justify-content:space-between;"><span>🔻 LOW: <b id="dispLow">30</b>%</span><span>🔺 HIGH: <b id="dispHigh">80</b>%</span></div>
-        <div style="background:#e2e8f0; height:20px; border-radius:10px; margin-top:6px; position:relative;">
-          <div id="lowMarker" style="position:absolute; height:100%; width:2px; background:#ef4444; left:30%;"></div>
-          <div id="highMarker" style="position:absolute; height:100%; width:2px; background:#10b981; left:80%;"></div>
+      <div id="waterAlert" style="text-align:center; font-weight:600; margin-bottom:10px; min-height:24px;">Menunggu data...</div>
+      <div class="threshold-bar">
+        <div class="threshold-labels"><span>🔻 LOW <span id="dispLow">30</span>%</span><span>🔺 HIGH <span id="dispHigh">80</span>%</span></div>
+        <div class="threshold-track">
+          <div class="threshold-marker low" id="lowMarker" style="left:30%;"></div>
+          <div class="threshold-marker high" id="highMarker" style="left:80%;"></div>
         </div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">📐 CALIBRATION</div>
-      <form id="calibForm" style="display:flex; flex-direction:column; gap:8px;">
-        <div class="cal-group"><label>Min Distance (cm) - FULL</label><input type="number" id="inMinAnalog" step="0.5" value="20"></div>
-        <div class="cal-group"><label>Max Distance (cm) - EMPTY</label><input type="number" id="inMaxAnalog" step="0.5" value="100"></div>
+      <div class="card-title"><span class="icon">📐</span> Calibration</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="cal-group"><label>Min Dist (cm) FULL</label><input type="number" id="inMinAnalog" step="0.5" value="20"></div>
+        <div class="cal-group"><label>Max Dist (cm) EMPTY</label><input type="number" id="inMaxAnalog" step="0.5" value="100"></div>
         <div class="cal-group"><label>Min Output (%)</label><input type="number" id="inMinDev" value="0"></div>
         <div class="cal-group"><label>Max Output (%)</label><input type="number" id="inMaxDev" value="100"></div>
-        <div class="cal-group"><label>🔻 LOW (Pump ON if water ≤)</label>
-          <div class="range-labels"><span>0%</span><span id="lowLabel">30%</span><span>100%</span></div>
-          <input type="range" id="slLow" min="0" max="100" value="30" oninput="updateLabels()">
-        </div>
-        <div class="cal-group"><label>🔺 HIGH (Pump OFF if water ≥)</label>
-          <div class="range-labels"><span>0%</span><span id="highLabel">80%</span><span>100%</span></div>
-          <input type="range" id="slHigh" min="0" max="100" value="80" oninput="updateLabels()">
-        </div>
-        <div class="cal-group"><label>Hysteresis (%)</label><input type="number" id="inHyst" step="1" value="5"></div>
-        <div class="btn-group-hor">
-          <button type="button" class="btn btn-water" onclick="sendCalibration()">💾 Save</button>
-          <button type="button" class="btn btn-primary" onclick="getCalibration()">📥 Get</button>
-        </div>
-        <div id="calibMsg" style="text-align:center; font-size:0.85rem; color:#065f46;"></div>
-      </form>
+      </div>
+      <div class="cal-group"><label>🔻 LOW (Pump ON if water ≤)</label>
+        <div class="range-labels"><span>0%</span><span id="lowLabel">30%</span><span>100%</span></div>
+        <input type="range" id="slLow" min="0" max="100" value="30" oninput="updateLabels()">
+      </div>
+      <div class="cal-group"><label>🔺 HIGH (Pump OFF if water ≥)</label>
+        <div class="range-labels"><span>0%</span><span id="highLabel">80%</span><span>100%</span></div>
+        <input type="range" id="slHigh" min="0" max="100" value="80" oninput="updateLabels()">
+      </div>
+      <div class="cal-group"><label>Hysteresis (%)</label><input type="number" id="inHyst" step="1" value="5"></div>
+      <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn btn-water" style="flex:2;" onclick="sendCalibration()">💾 Save to ESP32</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="getCalibration()">📥 Get</button>
+      </div>
+      <div class="cal-msg" id="calibMsg"></div>
     </div>
   </div>
 
   <!-- CHARTS -->
-  <div class="grid-2" style="margin-bottom:20px;">
-    <div class="card"><div class="card-title">📈 TEMP & HUM</div><div class="chart-container"><canvas id="chartTempHum"></canvas></div></div>
-    <div class="card"><div class="card-title">📊 WATER & SOIL</div><div class="chart-container"><canvas id="chartWaterSoil"></canvas></div></div>
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="card"><div class="card-title"><span class="icon">📈</span> Temperature & Humidity</div><div class="chart-container"><canvas id="chartTempHum"></canvas></div></div>
+    <div class="card"><div class="card-title"><span class="icon">📊</span> Water Level & Soil</div><div class="chart-container"><canvas id="chartWaterSoil"></canvas></div></div>
   </div>
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-title">⚡ POWER (W)</div>
-    <div class="chart-container" style="height:200px;"><canvas id="chartPower"></canvas></div>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-title"><span class="icon">⚡</span> Power Consumption (W)</div>
+    <div class="chart-container power-chart"><canvas id="chartPower"></canvas></div>
   </div>
 
   <!-- RFID + CARD MANAGEMENT -->
-  <div class="grid-2" style="margin-bottom:20px;">
+  <div class="grid-2" style="margin-bottom:24px;">
     <div class="card">
-      <div class="card-title">🔑 RFID</div>
+      <div class="card-title"><span class="icon">🔑</span> RFID Access</div>
       <div class="rfid-box">
-        <div class="rfid-row"><span>UID Terakhir</span><span class="rfid-value" id="rfidUid">---</span></div>
-        <div class="rfid-row"><span>Status</span><span class="rfid-value" id="rfidStatus">Menunggu...</span></div>
+        <div class="rfid-row"><span class="rfid-label">UID Terakhir</span><span class="rfid-value" id="rfidUid">---</span></div>
+        <div class="rfid-row"><span class="rfid-label">Status</span><span class="rfid-value" id="rfidStatus">Menunggu...</span></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">💳 CARD MANAGEMENT</div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <input type="text" id="cardUid" placeholder="UID (contoh: AB12CD34)" style="flex:2; padding:10px; border:1px solid #d1d5db; border-radius:8px; min-width:150px;">
+      <div class="card-title"><span class="icon">💳</span> Card Management</div>
+      <div class="input-group">
+        <input type="text" id="cardUid" class="input-field" placeholder="UID (contoh: AB12CD34)">
         <button class="btn btn-on" onclick="addCard()">Tambah</button>
         <button class="btn btn-off" onclick="delCard()">Hapus</button>
       </div>
@@ -333,18 +486,20 @@
   </div>
 
   <!-- HISTORY -->
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-title">📜 ACCESS HISTORY</div>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-title"><span class="icon">📜</span> Access History</div>
     <div class="history-box" id="historyBox">
-      <div style="text-align:center; color:#64748b; padding:16px;">Belum ada history</div>
+      <div style="text-align:center; color:#64748b; padding:20px;">Belum ada history</div>
     </div>
   </div>
 
-  <div class="footer">© Smart IoT Dashboard | ESP32 + MQTT | Semua data real-time</div>
+  <footer class="footer">© 2025 Smart IoT Dashboard Pro · Data tersimpan di browser · Grafis interaktif</footer>
 </div>
 
 <script>
-// ==================== KONFIGURASI MQTT ====================
+// ============================================================
+// KONFIGURASI MQTT
+// ============================================================
 const MQTT_CFG = {
   server: 'wss://69d8e81e8ba74d11b1bfa060701cf556.s1.eu.hivemq.cloud:8884/mqtt',
   username: 'hivemq.webclient.1772948203432',
@@ -369,14 +524,33 @@ const TOPICS = {
   powerReset: 'esp32/power/reset/cmd'
 };
 
+// ============================================================
+// STATE & DATA
+// ============================================================
+const STORAGE_KEY = 'iot_dashboard_data';
 let client = null;
 let connected = false;
+let currentFilterHours = 24;
 
-// Data untuk chart
-let historyData = { time: [], temp: [], hum: [], soil: [], water: [], power: [] };
+// Data mentah untuk grafik (disimpan di localStorage)
+let rawData = {
+  time: [],
+  temp: [],
+  hum: [],
+  soil: [],
+  water: [],
+  power: []
+};
+
+// Data yang sudah difilter
+let filteredData = { time: [], temp: [], hum: [], soil: [], water: [], power: [] };
+
+// Referensi grafik
 let chart1, chart2, chart3;
 
-// ==================== DOM REFS ====================
+// ============================================================
+// DOM REFS
+// ============================================================
 const connStatus = document.getElementById('connStatus');
 const sTemp = document.getElementById('sTemp');
 const sHum = document.getElementById('sHum');
@@ -386,197 +560,96 @@ const waterFill = document.getElementById('waterFill');
 const waterPercent = document.getElementById('waterPercent');
 const waterAlert = document.getElementById('waterAlert');
 const dispLow = document.getElementById('dispLow');
-const dispHigh = document.getElementById('dispHight');
+const dispHigh = document.getElementById('dispHigh');
 const lowMarker = document.getElementById('lowMarker');
 const highMarker = document.getElementById('highMarker');
 const calibMsg = document.getElementById('calibMsg');
-
 const pumpStatusBadge = document.getElementById('pumpStatusBadge');
 const pumpModeBadge = document.getElementById('pumpModeBadge');
-
 const rfidUid = document.getElementById('rfidUid');
 const rfidStatus = document.getElementById('rfidStatus');
 const historyBox = document.getElementById('historyBox');
+const dataCount = document.getElementById('dataCount');
 
-const pzV = document.getElementById('pzV');
-const pzA = document.getElementById('pzA');
-const pzW = document.getElementById('pzW');
-const pzWh = document.getElementById('pzWh');
-const pzF = document.getElementById('pzF');
-const pzPF = document.getElementById('pzPF');
-const pzStatus = document.getElementById('pzStatus');
-
-// ==================== HELPER FUNGSI ====================
-function updateLabels() {
-  let low = document.getElementById('slLow').value;
-  let high = document.getElementById('slHigh').value;
-  document.getElementById('lowLabel').innerText = low + '%';
-  document.getElementById('highLabel').innerText = high + '%';
-  dispLow.innerText = low;
-  dispHigh.innerText = high;
-  lowMarker.style.left = low + '%';
-  highMarker.style.left = high + '%';
+// ============================================================
+// STORAGE
+// ============================================================
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.time && data.temp && data.hum && data.soil && data.water && data.power) {
+        rawData = data;
+        console.log('📂 Loaded from storage: ' + rawData.time.length + ' points');
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
 }
 
-function updateWaterUI(level) {
-  let pct = Math.min(100, Math.max(0, level));
-  waterFill.style.height = pct + '%';
-  waterPercent.innerText = Math.round(pct) + '%';
-  let low = parseInt(document.getElementById('slLow').value);
-  let high = parseInt(document.getElementById('slHigh').value);
-  if(pct <= low) { waterAlert.innerHTML = '⚠️ LOW WATER - Pump ON'; waterAlert.style.color = '#ef4444'; }
-  else if(pct >= high) { waterAlert.innerHTML = '✅ HIGH WATER - Pump OFF'; waterAlert.style.color = '#10b981'; }
-  else { waterAlert.innerHTML = '💧 Normal Level'; waterAlert.style.color = '#3b82f6'; }
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rawData));
+  } catch(e) {}
 }
 
-function updatePumpUI(state, mode) {
-  if(state === 'ON') { pumpStatusBadge.innerText = '🟢 ON'; pumpStatusBadge.className = 'badge badge-on'; }
-  else { pumpStatusBadge.innerText = '🔴 OFF'; pumpStatusBadge.className = 'badge badge-off'; }
-  if(mode === 'AUTO') { pumpModeBadge.innerText = '🤖 AUTO'; pumpModeBadge.className = 'badge badge-auto'; }
-  else { pumpModeBadge.innerText = '👆 MANUAL'; pumpModeBadge.style.background = '#f59e0b'; pumpModeBadge.style.color = 'white'; }
-}
-
-function updateLampUI(num, state) {
-  const icon = document.getElementById('lampIcon'+num);
-  const statusEl = document.getElementById('lampStatus'+num);
-  if(state === 'ON') {
-    icon.className = 'lamp-icon on';
-    statusEl.innerText = 'ON';
-    statusEl.className = 'lamp-status on';
-  } else {
-    icon.className = 'lamp-icon off';
-    statusEl.innerText = 'OFF';
-    statusEl.className = 'lamp-status off';
+function addDataPoint(time, temp, hum, soil, water, power) {
+  rawData.time.push(time);
+  rawData.temp.push(temp);
+  rawData.hum.push(hum);
+  rawData.soil.push(soil);
+  rawData.water.push(water);
+  rawData.power.push(power || 0);
+  // batasi 500 titik agar tidak overload
+  if (rawData.time.length > 500) {
+    rawData.time.shift();
+    rawData.temp.shift();
+    rawData.hum.shift();
+    rawData.soil.shift();
+    rawData.water.shift();
+    rawData.power.shift();
   }
+  saveToStorage();
+  applyFilter();
 }
 
-function showCalibMsg(msg, ok=true) {
-  calibMsg.innerText = msg;
-  calibMsg.style.color = ok ? '#065f46' : '#991b1b';
-  setTimeout(() => { calibMsg.innerText = ''; }, 4000);
-}
-
-// ==================== MQTT PUBLISH ====================
-function controlLamp(num, state) { if(client && connected) client.publish('esp32/lamp'+num, state); }
-function openDoor() { if(client && connected) { client.publish(TOPICS.doorControl, 'OPEN'); alert('Membuka pintu...'); } }
-function pumpControl(cmd) { if(client && connected) client.publish(TOPICS.pumpControl, cmd); }
-function resetEnergy() { if(client && connected && confirm('Reset energi PZEM?')) client.publish(TOPICS.powerReset, 'RESET'); }
-
-function addCard() {
-  let uid = document.getElementById('cardUid').value.trim().toUpperCase();
-  if(!uid) { alert('Masukkan UID'); return; }
-  if(client && connected) { client.publish(TOPICS.rfidAdd, uid); document.getElementById('cardUid').value = ''; alert('Card '+uid+' added'); }
-}
-function delCard() {
-  let uid = document.getElementById('cardUid').value.trim().toUpperCase();
-  if(!uid) { alert('Masukkan UID'); return; }
-  if(client && connected) { client.publish(TOPICS.rfidDel, uid); document.getElementById('cardUid').value = ''; alert('Card '+uid+' deleted'); }
-}
-
-// ==================== CALIBRATION ====================
-function sendCalibration() {
-  if(!client || !connected) { alert('MQTT tidak terhubung!'); return; }
-  let cfg = {
-    minAnalog: parseFloat(document.getElementById('inMinAnalog').value),
-    maxAnalog: parseFloat(document.getElementById('inMaxAnalog').value),
-    minDevice: parseFloat(document.getElementById('inMinDev').value),
-    maxDevice: parseFloat(document.getElementById('inMaxDev').value),
-    waterLow: parseInt(document.getElementById('slLow').value),
-    waterHigh: parseInt(document.getElementById('slHigh').value),
-    hysteresis: parseFloat(document.getElementById('inHyst').value)
-  };
-  if(cfg.minAnalog >= cfg.maxAnalog) { alert('Min Distance < Max Distance'); return; }
-  if(cfg.waterLow >= cfg.waterHigh) { alert('LOW < HIGH'); return; }
-  client.publish(TOPICS.calibSet, JSON.stringify(cfg));
-  showCalibMsg('✅ Kalibrasi dikirim ke ESP32', true);
-}
-
-function getCalibration() {
-  if(!client || !connected) { alert('MQTT tidak terhubung!'); return; }
-  client.publish(TOPICS.calibGet, '');
-  showCalibMsg('📡 Meminta kalibrasi...', true);
-}
-
-function applyCalibFromESP32(data) {
-  if(data.minAnalog !== undefined) document.getElementById('inMinAnalog').value = data.minAnalog;
-  if(data.maxAnalog !== undefined) document.getElementById('inMaxAnalog').value = data.maxAnalog;
-  if(data.minDevice !== undefined) document.getElementById('inMinDev').value = data.minDevice;
-  if(data.maxDevice !== undefined) document.getElementById('inMaxDev').value = data.maxDevice;
-  if(data.waterLow !== undefined) document.getElementById('slLow').value = data.waterLow;
-  if(data.waterHigh !== undefined) document.getElementById('slHigh').value = data.waterHigh;
-  if(data.hysteresis !== undefined) document.getElementById('inHyst').value = data.hysteresis;
-  updateLabels();
-  if(data.currentWater !== undefined) updateWaterUI(data.currentWater);
-  showCalibMsg('✅ Kalibrasi dari ESP32 diterima', true);
-}
-
-// ==================== PROCESS DATA ====================
-function processSensorData(data) {
-  if(data.temp !== undefined) sTemp.innerText = data.temp.toFixed(1);
-  if(data.hum !== undefined) sHum.innerText = data.hum.toFixed(0);
-  if(data.soil !== undefined) sSoil.innerText = data.soil;
-  if(data.water_level !== undefined) {
-    sWater.innerText = data.water_level.toFixed(1);
-    updateWaterUI(data.water_level);
+// ============================================================
+// FILTER DATA
+// ============================================================
+function applyFilter() {
+  if (rawData.time.length === 0) {
+    filteredData = { time: [], temp: [], hum: [], soil: [], water: [], power: [] };
+    updateCharts();
+    return;
   }
-  if(data.pump_status) updatePumpUI(data.pump_status, data.pump_mode || 'AUTO');
-  if(data.waterLow !== undefined) { document.getElementById('slLow').value = data.waterLow; updateLabels(); }
-  if(data.waterHigh !== undefined) { document.getElementById('slHigh').value = data.waterHigh; updateLabels(); }
-  if(data.minAnalog !== undefined) document.getElementById('inMinAnalog').value = data.minAnalog;
-  if(data.maxAnalog !== undefined) document.getElementById('inMaxAnalog').value = data.maxAnalog;
-
-  // Update charts
-  let t = new Date().toLocaleTimeString();
-  historyData.time.push(t);
-  historyData.temp.push(data.temp || 0);
-  historyData.hum.push(data.hum || 0);
-  historyData.soil.push(data.soil || 0);
-  historyData.water.push(data.water_level || 0);
-  if(data.pzem_power !== undefined) historyData.power.push(data.pzem_power);
-  else historyData.power.push(0);
-
-  if(historyData.time.length > 100) {
-    historyData.time.shift(); historyData.temp.shift(); historyData.hum.shift();
-    historyData.soil.shift(); historyData.water.shift(); historyData.power.shift();
+  const now = Date.now();
+  const cutoff = now - currentFilterHours * 3600 * 1000;
+  
+  // Cari indeks pertama yang masuk filter
+  let startIdx = 0;
+  for (let i = 0; i < rawData.time.length; i++) {
+    if (rawData.time[i] >= cutoff) {
+      startIdx = i;
+      break;
+    }
   }
+  
+  filteredData.time = rawData.time.slice(startIdx);
+  filteredData.temp = rawData.temp.slice(startIdx);
+  filteredData.hum = rawData.hum.slice(startIdx);
+  filteredData.soil = rawData.soil.slice(startIdx);
+  filteredData.water = rawData.water.slice(startIdx);
+  filteredData.power = rawData.power.slice(startIdx);
+  
+  dataCount.textContent = filteredData.time.length;
   updateCharts();
 }
 
-function processPowerData(data) {
-  if(data.voltage !== undefined) pzV.innerText = data.voltage.toFixed(1);
-  if(data.current !== undefined) pzA.innerText = data.current.toFixed(2);
-  if(data.power !== undefined) pzW.innerText = data.power.toFixed(1);
-  if(data.energy !== undefined) pzWh.innerText = data.energy.toFixed(3);
-  if(data.frequency !== undefined) pzF.innerText = data.frequency.toFixed(1);
-  if(data.power_factor !== undefined) pzPF.innerText = data.power_factor.toFixed(2);
-  if(data.voltage && data.voltage > 0) pzStatus.innerHTML = '🟢 PZEM Connected';
-  else pzStatus.innerHTML = '🔴 PZEM Not Detected';
-}
-
-function processLampAll(data) {
-  if(data.lamp1) updateLampUI(1, data.lamp1);
-  if(data.lamp2) updateLampUI(2, data.lamp2);
-  if(data.lamp3) updateLampUI(3, data.lamp3);
-  if(data.lamp4) updateLampUI(4, data.lamp4);
-}
-
-function processRFIDScan(uid) { rfidUid.innerText = uid; }
-function processRFIDStatus(status) { rfidStatus.innerText = status; }
-function processRFIDHistory(uid) {
-  let t = new Date().toLocaleTimeString();
-  let item = document.createElement('div');
-  item.className = 'history-item';
-  item.innerHTML = `<span>📇 ${uid}</span><span>⏱️ ${t}</span>`;
-  historyBox.prepend(item);
-  if(historyBox.children.length > 30) historyBox.removeChild(historyBox.lastChild);
-  // jika belum ada history, hapus placeholder
-  if(historyBox.children.length === 1 && historyBox.children[0].innerText.includes('Belum ada')) {
-    historyBox.innerHTML = '';
-    historyBox.appendChild(item);
-  }
-}
-
-// ==================== CHARTS ====================
+// ============================================================
+// CHARTS
+// ============================================================
 function initCharts() {
   const ctx1 = document.getElementById('chartTempHum').getContext('2d');
   const ctx2 = document.getElementById('chartWaterSoil').getContext('2d');
@@ -585,57 +658,248 @@ function initCharts() {
   chart1 = new Chart(ctx1, {
     type: 'line',
     data: { labels: [], datasets: [
-      { label: 'Temp °C', data: [], borderColor: '#ef4444', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 2 },
-      { label: 'Hum %', data: [], borderColor: '#3b82f6', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 2 }
+      { label: 'Temp °C', data: [], borderColor: '#ef4444', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 },
+      { label: 'Hum %', data: [], borderColor: '#3b82f6', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 }
     ]},
-    options: { responsive: true, maintainAspectRatio: false }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
   });
 
   chart2 = new Chart(ctx2, {
     type: 'line',
     data: { labels: [], datasets: [
-      { label: 'Water %', data: [], borderColor: '#00b4d8', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 2 },
-      { label: 'Soil %', data: [], borderColor: '#10b981', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 2 }
+      { label: 'Water %', data: [], borderColor: '#0ea5e9', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 },
+      { label: 'Soil %', data: [], borderColor: '#10b981', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 }
     ]},
-    options: { responsive: true, maintainAspectRatio: false }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
   });
 
   chart3 = new Chart(ctx3, {
     type: 'line',
     data: { labels: [], datasets: [
-      { label: 'Power W', data: [], borderColor: '#f59e0b', borderWidth: 2, fill: true, backgroundColor: 'rgba(245,158,11,0.1)', tension: 0.2, pointRadius: 2 }
+      { label: 'Power (W)', data: [], borderColor: '#f59e0b', borderWidth: 2, fill: true, backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.2, pointRadius: 1 }
     ]},
-    options: { responsive: true, maintainAspectRatio: false }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
   });
 }
 
 function updateCharts() {
-  if(chart1) {
-    chart1.data.labels = historyData.time;
-    chart1.data.datasets[0].data = historyData.temp;
-    chart1.data.datasets[1].data = historyData.hum;
+  const labels = filteredData.time.map(ts => new Date(ts).toLocaleTimeString());
+  if (chart1) {
+    chart1.data.labels = labels;
+    chart1.data.datasets[0].data = filteredData.temp;
+    chart1.data.datasets[1].data = filteredData.hum;
     chart1.update();
   }
-  if(chart2) {
-    chart2.data.labels = historyData.time;
-    chart2.data.datasets[0].data = historyData.water;
-    chart2.data.datasets[1].data = historyData.soil;
+  if (chart2) {
+    chart2.data.labels = labels;
+    chart2.data.datasets[0].data = filteredData.water;
+    chart2.data.datasets[1].data = filteredData.soil;
     chart2.update();
   }
-  if(chart3) {
-    chart3.data.labels = historyData.time;
-    chart3.data.datasets[0].data = historyData.power;
+  if (chart3) {
+    chart3.data.labels = labels;
+    chart3.data.datasets[0].data = filteredData.power;
     chart3.update();
   }
 }
 
-// ==================== MQTT ====================
+// ============================================================
+// UI HELPERS
+// ============================================================
+function updateLabels() {
+  const low = document.getElementById('slLow').value;
+  const high = document.getElementById('slHigh').value;
+  document.getElementById('lowLabel').textContent = low + '%';
+  document.getElementById('highLabel').textContent = high + '%';
+  dispLow.textContent = low;
+  dispHigh.textContent = high;
+  lowMarker.style.left = low + '%';
+  highMarker.style.left = high + '%';
+}
+
+function updateWaterUI(level) {
+  const pct = Math.min(100, Math.max(0, level));
+  waterFill.style.height = pct + '%';
+  waterPercent.textContent = Math.round(pct) + '%';
+  const low = parseInt(document.getElementById('slLow').value) || 30;
+  const high = parseInt(document.getElementById('slHigh').value) || 80;
+  if (pct <= low) { waterAlert.textContent = '⚠️ LOW WATER - Pump ON'; waterAlert.style.color = '#ef4444'; }
+  else if (pct >= high) { waterAlert.textContent = '✅ HIGH WATER - Pump OFF'; waterAlert.style.color = '#10b981'; }
+  else { waterAlert.textContent = '💧 Normal Level'; waterAlert.style.color = '#38bdf8'; }
+}
+
+function updatePumpUI(state, mode) {
+  if (state === 'ON') { pumpStatusBadge.textContent = '🟢 ON'; pumpStatusBadge.className = 'pump-badge on'; }
+  else { pumpStatusBadge.textContent = '🔴 OFF'; pumpStatusBadge.className = 'pump-badge off'; }
+  if (mode === 'AUTO') { pumpModeBadge.textContent = '🤖 AUTO'; pumpModeBadge.className = 'pump-badge auto'; }
+  else { pumpModeBadge.textContent = '👆 MANUAL'; pumpModeBadge.style.cssText = 'background:#f59e0b;color:#fff;padding:4px 14px;border-radius:30px;font-weight:600;font-size:0.8rem;'; }
+}
+
+function updateLampUI(num, state) {
+  const icon = document.getElementById('lampIcon'+num);
+  const statusEl = document.getElementById('lampStatus'+num);
+  if (state === 'ON') { icon.className = 'lamp-icon on'; statusEl.textContent = 'ON'; statusEl.className = 'lamp-status on'; }
+  else { icon.className = 'lamp-icon off'; statusEl.textContent = 'OFF'; statusEl.className = 'lamp-status off'; }
+}
+
+function showCalibMsg(msg, ok = true) {
+  calibMsg.textContent = msg;
+  calibMsg.className = 'cal-msg ' + (ok ? 'success' : 'error');
+  setTimeout(() => { calibMsg.textContent = ''; calibMsg.className = 'cal-msg'; }, 4000);
+}
+
+function updateRFID(uid, status) {
+  if (uid) rfidUid.textContent = uid;
+  if (status) rfidStatus.textContent = status;
+}
+
+function addHistoryItem(uid, timeStr) {
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `<span class="uid">📇 ${uid}</span><span class="time">⏱️ ${timeStr}</span>`;
+  historyBox.prepend(item);
+  if (historyBox.children.length > 30) historyBox.removeChild(historyBox.lastChild);
+  if (historyBox.querySelector('div[style]')) historyBox.innerHTML = '';
+}
+
+// ============================================================
+// MQTT PUBLISH
+// ============================================================
+function controlLamp(num, state) { if (client && connected) client.publish('esp32/lamp'+num, state); }
+function openDoor() { if (client && connected) { client.publish(TOPICS.doorControl, 'OPEN'); alert('🔓 Membuka pintu...'); } }
+function pumpControl(cmd) { if (client && connected) client.publish(TOPICS.pumpControl, cmd); }
+function resetEnergy() { if (client && connected && confirm('Reset energi PZEM ke 0?')) client.publish(TOPICS.powerReset, 'RESET'); }
+
+function addCard() {
+  const uid = document.getElementById('cardUid').value.trim().toUpperCase();
+  if (!uid) { alert('Masukkan UID kartu!'); return; }
+  if (client && connected) { client.publish(TOPICS.rfidAdd, uid); document.getElementById('cardUid').value = ''; alert('✅ Kartu '+uid+' ditambahkan'); }
+}
+function delCard() {
+  const uid = document.getElementById('cardUid').value.trim().toUpperCase();
+  if (!uid) { alert('Masukkan UID kartu!'); return; }
+  if (client && connected) { client.publish(TOPICS.rfidDel, uid); document.getElementById('cardUid').value = ''; alert('🗑️ Kartu '+uid+' dihapus'); }
+}
+
+// ============================================================
+// CALIBRATION
+// ============================================================
+function sendCalibration() {
+  if (!client || !connected) { alert('MQTT tidak terhubung!'); return; }
+  const cfg = {
+    minAnalog: parseFloat(document.getElementById('inMinAnalog').value),
+    maxAnalog: parseFloat(document.getElementById('inMaxAnalog').value),
+    minDevice: parseFloat(document.getElementById('inMinDev').value),
+    maxDevice: parseFloat(document.getElementById('inMaxDev').value),
+    waterLow: parseInt(document.getElementById('slLow').value),
+    waterHigh: parseInt(document.getElementById('slHigh').value),
+    hysteresis: parseFloat(document.getElementById('inHyst').value)
+  };
+  if (cfg.minAnalog >= cfg.maxAnalog) { alert('Min Distance < Max Distance'); return; }
+  if (cfg.waterLow >= cfg.waterHigh) { alert('LOW < HIGH'); return; }
+  client.publish(TOPICS.calibSet, JSON.stringify(cfg));
+  showCalibMsg('✅ Kalibrasi dikirim ke ESP32', true);
+}
+
+function getCalibration() {
+  if (!client || !connected) { alert('MQTT tidak terhubung!'); return; }
+  client.publish(TOPICS.calibGet, '');
+  showCalibMsg('📡 Meminta kalibrasi...', true);
+}
+
+function applyCalibFromESP32(data) {
+  if (data.minAnalog !== undefined) document.getElementById('inMinAnalog').value = data.minAnalog;
+  if (data.maxAnalog !== undefined) document.getElementById('inMaxAnalog').value = data.maxAnalog;
+  if (data.minDevice !== undefined) document.getElementById('inMinDev').value = data.minDevice;
+  if (data.maxDevice !== undefined) document.getElementById('inMaxDev').value = data.maxDevice;
+  if (data.waterLow !== undefined) document.getElementById('slLow').value = data.waterLow;
+  if (data.waterHigh !== undefined) document.getElementById('slHigh').value = data.waterHigh;
+  if (data.hysteresis !== undefined) document.getElementById('inHyst').value = data.hysteresis;
+  updateLabels();
+  if (data.currentWater !== undefined) updateWaterUI(data.currentWater);
+  showCalibMsg('✅ Kalibrasi dari ESP32 diterima', true);
+}
+
+// ============================================================
+// PROCESS DATA
+// ============================================================
+function processSensorData(data) {
+  // Update UI
+  if (data.temp !== undefined) sTemp.innerHTML = data.temp.toFixed(1) + '<span class="sensor-unit">°C</span>';
+  if (data.hum !== undefined) sHum.innerHTML = data.hum.toFixed(0) + '<span class="sensor-unit">%</span>';
+  if (data.soil !== undefined) sSoil.innerHTML = data.soil + '<span class="sensor-unit">%</span>';
+  if (data.water_level !== undefined) {
+    sWater.innerHTML = data.water_level.toFixed(1) + '<span class="sensor-unit">%</span>';
+    updateWaterUI(data.water_level);
+  }
+  if (data.pump_status) updatePumpUI(data.pump_status, data.pump_mode || 'AUTO');
+  if (data.waterLow !== undefined) { document.getElementById('slLow').value = data.waterLow; updateLabels(); }
+  if (data.waterHigh !== undefined) { document.getElementById('slHigh').value = data.waterHigh; updateLabels(); }
+  if (data.minAnalog !== undefined) document.getElementById('inMinAnalog').value = data.minAnalog;
+  if (data.maxAnalog !== undefined) document.getElementById('inMaxAnalog').value = data.maxAnalog;
+
+  // Data untuk grafik
+  const now = Date.now();
+  const temp = data.temp || 0;
+  const hum = data.hum || 0;
+  const soil = data.soil || 0;
+  const water = data.water_level || 0;
+  const power = data.pzem_power || 0;
+  addDataPoint(now, temp, hum, soil, water, power);
+}
+
+function processPowerData(data) {
+  if (data.voltage !== undefined) document.getElementById('pzV').textContent = data.voltage.toFixed(1);
+  if (data.current !== undefined) document.getElementById('pzA').textContent = data.current.toFixed(2);
+  if (data.power !== undefined) document.getElementById('pzW').textContent = data.power.toFixed(1);
+  if (data.energy !== undefined) document.getElementById('pzWh').textContent = data.energy.toFixed(3);
+  if (data.frequency !== undefined) document.getElementById('pzF').textContent = data.frequency.toFixed(1);
+  if (data.power_factor !== undefined) document.getElementById('pzPF').textContent = data.power_factor.toFixed(2);
+  const status = document.getElementById('pzStatus');
+  if (data.voltage && data.voltage > 0) status.innerHTML = '🟢 PZEM Connected';
+  else status.innerHTML = '🔴 PZEM Not Detected';
+}
+
+function processLampAll(data) {
+  if (data.lamp1) updateLampUI(1, data.lamp1);
+  if (data.lamp2) updateLampUI(2, data.lamp2);
+  if (data.lamp3) updateLampUI(3, data.lamp3);
+  if (data.lamp4) updateLampUI(4, data.lamp4);
+}
+
+// ============================================================
+// MQTT CONNECTION
+// ============================================================
 function connectMQTT() {
-  connStatus.innerText = '⚡ Connecting...';
-  connStatus.style.background = '#fbbf24';
+  connStatus.className = 'conn-status';
+  connStatus.innerHTML = '<span class="dot"></span> Menghubungkan...';
 
   const opts = {
-    clientId: 'web_' + Math.random().toString(36).substr(2,8),
+    clientId: 'web_' + Math.random().toString(36).substr(2, 8),
     clean: true,
     connectTimeout: 10000,
     reconnectPeriod: 5000,
@@ -647,8 +911,8 @@ function connectMQTT() {
 
   client.on('connect', () => {
     connected = true;
-    connStatus.innerText = '✅ Connected';
-    connStatus.style.background = '#10b981';
+    connStatus.className = 'conn-status online';
+    connStatus.innerHTML = '<span class="dot"></span> Online';
     // Subscribe
     client.subscribe(TOPICS.sensor);
     client.subscribe(TOPICS.power);
@@ -658,48 +922,80 @@ function connectMQTT() {
     client.subscribe(TOPICS.rfidScan);
     client.subscribe(TOPICS.rfidStatus);
     client.subscribe(TOPICS.rfidHistory);
-    console.log('Subscribed to all topics');
-    setTimeout(getCalibration, 1500);
+    console.log('✅ MQTT connected & subscribed');
+    setTimeout(getCalibration, 2000);
   });
 
   client.on('close', () => {
     connected = false;
-    connStatus.innerText = '❌ Disconnected';
-    connStatus.style.background = '#ef4444';
+    connStatus.className = 'conn-status offline';
+    connStatus.innerHTML = '<span class="dot"></span> Offline';
   });
 
   client.on('error', (err) => {
     console.error('MQTT error:', err);
     connected = false;
-    connStatus.innerText = '⚠️ Error';
-    connStatus.style.background = '#ef4444';
+    connStatus.className = 'conn-status offline';
+    connStatus.innerHTML = '<span class="dot"></span> Error';
   });
 
   client.on('message', (topic, message) => {
     const msg = message.toString();
     try {
       const data = JSON.parse(msg);
-      if(topic === TOPICS.sensor) processSensorData(data);
-      else if(topic === TOPICS.power) processPowerData(data);
-      else if(topic === TOPICS.calib) applyCalibFromESP32(data);
-      else if(topic === TOPICS.lampAll) processLampAll(data);
-      else if(topic === TOPICS.pumpStatus) {
-        if(data.status) updatePumpUI(data.status, data.mode || 'AUTO');
+      if (topic === TOPICS.sensor) processSensorData(data);
+      else if (topic === TOPICS.power) processPowerData(data);
+      else if (topic === TOPICS.calib) applyCalibFromESP32(data);
+      else if (topic === TOPICS.lampAll) processLampAll(data);
+      else if (topic === TOPICS.pumpStatus) {
+        if (data.status) updatePumpUI(data.status, data.mode || 'AUTO');
       }
-    } catch(e) {
-      // kemungkinan plain text
-      if(topic === TOPICS.rfidScan) processRFIDScan(msg);
-      else if(topic === TOPICS.rfidStatus) processRFIDStatus(msg);
-      else if(topic === TOPICS.rfidHistory) processRFIDHistory(msg);
+    } catch (e) {
+      // Plain text
+      if (topic === TOPICS.rfidScan) updateRFID(msg, null);
+      else if (topic === TOPICS.rfidStatus) updateRFID(null, msg);
+      else if (topic === TOPICS.rfidHistory) addHistoryItem(msg, new Date().toLocaleTimeString());
     }
   });
 }
 
-// ==================== INIT ====================
+// ============================================================
+// FILTER BUTTONS
+// ============================================================
+function setupFilterButtons() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentFilterHours = parseInt(this.dataset.hours);
+      applyFilter();
+    });
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
 window.onload = function() {
+  // Load data dari storage
+  loadFromStorage();
+  
+  // Init charts
   initCharts();
+  
+  // Apply filter default
+  applyFilter();
+  
+  // Setup filter buttons
+  setupFilterButtons();
+  
+  // Connect MQTT
   connectMQTT();
+  
+  // Update labels
   updateLabels();
+  
+  console.log('🚀 Dashboard Pro loaded. Data points:', rawData.time.length);
 };
 </script>
 </body>
