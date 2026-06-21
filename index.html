@@ -129,13 +129,14 @@
         <span class="cam-dot off" id="camDot"></span>
         <span id="camStatusText">Menunggu koneksi...</span>
       </div>
-      <div style="flex:1; min-width:200px;">
-        <label style="font-size:0.8rem; color:#94a3b8;">IP Address CAM (otomatis terisi)</label>
+      <div style="flex:1; min-width:280px;">
+        <label style="font-size:0.8rem; color:#94a3b8;">IP Address CAM</label>
         <div class="input-group">
-          <input type="text" id="camIpInput" class="input-field" placeholder="192.168.1.100" readonly style="background:#1e293b; color:#94a3b8;">
+          <input type="text" id="camIpInput" class="input-field" placeholder="192.168.1.100" value="">
+          <button class="btn btn-primary" onclick="saveCamIP()">💾 Simpan IP</button>
           <button class="btn btn-water" onclick="testCam()">🔍 Test</button>
         </div>
-        <div id="camMsg" style="font-size:0.75rem; color:#64748b; margin-top:4px;"></div>
+        <div id="camMsg" style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">Masukkan IP CAM manual atau tunggu otomatis</div>
       </div>
     </div>
   </div>
@@ -256,7 +257,8 @@ const TOPICS = {
   rfidHistory:'esp32/rfid/history', rfidHistoryList:'esp32/rfid/history_list',
   doorControl:'esp32/doorlock', pumpControl:'esp32/pump/manual',
   rfidAdd:'esp32/rfid/add', rfidDel:'esp32/rfid/delete',
-  powerReset:'esp32/power/reset/cmd'
+  powerReset:'esp32/power/reset/cmd',
+  camSetIp:'esp32/cam/setip'  // untuk kirim IP manual
 };
 const HISTORY_STORAGE_KEY = 'rfid_history';
 let client = null, connected = false, currentFilterHours = 24;
@@ -362,11 +364,26 @@ function pumpControl(cmd){ if(client&&connected) client.publish(TOPICS.pumpContr
 function resetEnergy(){ if(client&&connected&&confirm('Reset energi PZEM ke 0?')) client.publish(TOPICS.powerReset,'RESET'); }
 function addCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidAdd,u); document.getElementById('cardUid').value=''; alert('✅ Kartu '+u+' ditambahkan'); } }
 function delCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidDel,u); document.getElementById('cardUid').value=''; alert('🗑️ Kartu '+u+' dihapus'); } }
+
+// ============================================================
+// CAM MANUAL IP
+// ============================================================
+function saveCamIP(){
+  const ip = camIpInput.value.trim();
+  if(ip === ''){ alert('Masukkan IP CAM!'); return; }
+  if(!client || !connected){ alert('MQTT tidak terhubung!'); return; }
+  client.publish(TOPICS.camSetIp, ip);
+  camMsg.textContent = '📤 Mengirim IP ke ESP32...';
+  setTimeout(() => {
+    camMsg.textContent = '✅ IP dikirim! Tunggu status update.';
+  }, 2000);
+}
+
 function testCam(){
-  const ip=camIpInput.value.trim()||'Tidak ada IP';
-  if(ip==='Tidak ada IP'){ alert('Masukkan IP CAM terlebih dahulu!'); return; }
-  camMsg.textContent='🔍 Testing connection ke '+ip+':82 ...';
-  if(client&&connected){ client.publish('esp32/cam/test',ip); setTimeout(()=>{ camMsg.textContent='✅ Test request dikirim.'; },1000); }
+  const ip = camIpInput.value.trim() || 'Tidak ada IP';
+  if(ip === 'Tidak ada IP'){ alert('Masukkan IP CAM terlebih dahulu!'); return; }
+  camMsg.textContent = '🔍 Testing connection ke '+ip+':82 ... (cek Serial Monitor ESP32 utama)';
+  if(client&&connected){ client.publish('esp32/cam/test',ip); }
 }
 
 // ============================================================
