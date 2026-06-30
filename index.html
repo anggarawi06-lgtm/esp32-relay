@@ -28,6 +28,9 @@
       --shadow-header: 0 8px 20px rgba(0,0,0,0.3);
       --filter-bg: rgba(255,255,255,0.04);
       --bg-formula: rgba(255,255,255,0.03);
+      --modal-overlay: rgba(0,0,0,0.7);
+      --modal-bg: #1e293b;
+      --modal-border: #334155;
     }
 
     /* ===== LIGHT THEME ===== */
@@ -51,6 +54,9 @@
       --shadow-header: 0 8px 20px rgba(0,0,0,0.08);
       --filter-bg: rgba(0,0,0,0.04);
       --bg-formula: rgba(0,0,0,0.03);
+      --modal-overlay: rgba(0,0,0,0.5);
+      --modal-bg: #ffffff;
+      --modal-border: #d1d5db;
     }
 
     /* ===== RESET & BASE ===== */
@@ -76,7 +82,6 @@
     .conn-status.offline { background:#ef4444; color:#fff; }
     .conn-status .dot { width:8px; height:8px; border-radius:50%; background:currentColor; display:inline-block; }
 
-    /* Theme Toggle */
     .theme-toggle {
       background:var(--bg-input); border:1px solid var(--border-input); border-radius:30px;
       padding:6px 12px; cursor:pointer; display:flex; align-items:center; gap:8px;
@@ -149,6 +154,12 @@
       padding:8px 12px;
       text-align:center;
       border:1px solid var(--border-card);
+      cursor:pointer;
+      transition:background 0.2s, transform 0.1s;
+    }
+    .power-detail-item:hover {
+      background:var(--bg-card-hover);
+      transform:scale(1.02);
     }
     .power-detail-item .value {
       font-size:1.2rem;
@@ -161,45 +172,79 @@
       text-transform:uppercase;
       letter-spacing:0.04em;
     }
+    .power-detail-item .click-hint {
+      font-size:0.55rem;
+      color:var(--text-muted);
+      opacity:0.6;
+      margin-top:2px;
+      display:block;
+    }
 
-    /* ===== FORMULA NOTE ===== */
-    .formula-note {
-      margin-top:16px;
-      padding:14px 16px;
-      background:var(--bg-formula);
-      border-radius:12px;
-      border:1px solid var(--border-card);
-      font-size:0.85rem;
-      color:var(--text-secondary);
-      line-height:1.7;
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      display:none;
+      position:fixed;
+      top:0; left:0; width:100%; height:100%;
+      background:var(--modal-overlay);
+      backdrop-filter:blur(4px);
+      z-index:999;
+      justify-content:center;
+      align-items:center;
     }
-    .formula-note strong {
+    .modal-overlay.active { display:flex; }
+    .modal-box {
+      background:var(--modal-bg);
+      border-radius:20px;
+      padding:28px 32px;
+      max-width:480px;
+      width:90%;
+      border:1px solid var(--modal-border);
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+      position:relative;
+      animation:modalFade 0.25s ease;
+    }
+    @keyframes modalFade {
+      from { opacity:0; transform:scale(0.95) translateY(20px); }
+      to { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .modal-close {
+      position:absolute;
+      top:12px; right:16px;
+      background:none;
+      border:none;
+      color:var(--text-muted);
+      font-size:1.4rem;
+      cursor:pointer;
+      transition:0.2s;
+    }
+    .modal-close:hover { color:var(--text-primary); transform:rotate(90deg); }
+    .modal-title {
+      font-size:1.2rem;
+      font-weight:700;
       color:var(--text-primary);
+      margin-bottom:6px;
     }
-    .formula-note .math {
-      font-family: 'Courier New', monospace;
+    .modal-sub {
+      font-size:0.9rem;
+      color:var(--text-secondary);
+      margin-bottom:16px;
+    }
+    .modal-formula {
       background:var(--bg-input);
-      padding:0 6px;
-      border-radius:4px;
+      padding:12px 16px;
+      border-radius:10px;
+      font-family:'Courier New',monospace;
+      font-size:1.1rem;
       color:var(--text-primary);
+      border:1px solid var(--border-input);
+      margin-bottom:12px;
     }
-    .formula-note .row {
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px 24px;
-    }
-    .formula-note .col {
-      flex:1;
-      min-width:160px;
-    }
-    .formula-note .title {
-      font-weight:600;
+    .modal-desc {
+      font-size:0.9rem;
       color:var(--text-secondary);
-      margin-bottom:4px;
-      font-size:0.8rem;
-      text-transform:uppercase;
-      letter-spacing:0.04em;
+      line-height:1.6;
     }
+    .modal-desc strong { color:var(--text-primary); }
 
     .status-badge { display:inline-block; padding:4px 12px; border-radius:30px; font-size:0.7rem; font-weight:600; margin-top:4px; }
     .status-badge.normal { background:#10b981; color:#fff; }
@@ -293,6 +338,7 @@
       .indicator-grid { grid-template-columns:1fr; }
       .header { flex-direction:column; align-items:stretch; text-align:center; }
       .header-right { justify-content:center; }
+      .modal-box { padding:20px; }
     }
   </style>
 </head>
@@ -402,71 +448,62 @@
       <div class="indicator-item"><span>📊 Power Factor</span><span id="indPF"><span class="indicator-dot green"></span> Normal</span></div>
     </div>
 
-    <!-- ===== POWER DETAILS ===== -->
+    <!-- ===== POWER DETAILS (CLICKABLE) ===== -->
     <div class="power-details-grid">
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('apparent')">
         <div class="value" id="pzApparent">-- <span class="power-unit">VA</span></div>
         <div class="label">Apparent Power (S)</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('reactive')">
         <div class="value" id="pzReactive">-- <span class="power-unit">VAR</span></div>
         <div class="label">Reactive Power (Q)</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('cosphi')">
         <div class="value" id="pzCosPhi">-- <span class="power-unit">PF</span></div>
         <div class="label">Cos Phi (PF)</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('efficiency')">
         <div class="value" id="pzEff">-- <span class="power-unit">%</span></div>
         <div class="label">Efficiency (PF×100)</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('frequency')">
         <div class="value" id="pzFreq">-- <span class="power-unit">Hz</span></div>
         <div class="label">Frequency</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('voltage')">
         <div class="value" id="pzVoltageDetail">-- <span class="power-unit">V</span></div>
         <div class="label">AC Voltage</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('current')">
         <div class="value" id="pzCurrentDetail">-- <span class="power-unit">A</span></div>
         <div class="label">AC Current</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
-      <div class="power-detail-item">
+      <div class="power-detail-item" onclick="openFormula('power')">
         <div class="value" id="pzPowerDetail">-- <span class="power-unit">W</span></div>
         <div class="label">AC Power (P)</div>
+        <span class="click-hint">↗ klik rumus</span>
       </div>
     </div>
 
-    <!-- ===== FORMULA NOTE ===== -->
-    <div class="formula-note">
-      <div class="title">📐 Catatan Rumus Daya Listrik AC</div>
-      <div class="row">
-        <div class="col">
-          <strong>Daya Semu (S)</strong><br>
-          <span class="math">S = V × I</span> &nbsp;(VA)
-        </div>
-        <div class="col">
-          <strong>Daya Aktif (P)</strong><br>
-          <span class="math">P = V × I × cos φ</span> &nbsp;(W)
-        </div>
-        <div class="col">
-          <strong>Daya Reaktif (Q)</strong><br>
-          <span class="math">Q = V × I × sin φ</span> &nbsp;(VAR)
-        </div>
-      </div>
-      <div class="row" style="margin-top:6px;">
-        <div class="col">
-          <strong>Hubungan Segitiga Daya</strong><br>
-          <span class="math">S² = P² + Q²</span>
-        </div>
-        <div class="col">
-          <strong>Power Factor</strong><br>
-          <span class="math">PF = cos φ = P / S</span>
-        </div>
-        <div class="col">
-          <strong>Efisiensi</strong><br>
-          <span class="math">η = PF × 100%</span>
+    <!-- ===== MODAL RUMUS ===== -->
+    <div class="modal-overlay" id="formulaModal">
+      <div class="modal-box">
+        <button class="modal-close" onclick="closeFormula()">✕</button>
+        <div class="modal-title" id="modalTitle">Apparent Power</div>
+        <div class="modal-sub" id="modalSub">Daya semu (S)</div>
+        <div class="modal-formula" id="modalFormula">S = V × I</div>
+        <div class="modal-desc" id="modalDesc">
+          <strong>Keterangan:</strong><br>
+          S = Daya semu (VA)<br>
+          V = Tegangan (V)<br>
+          I = Arus (A)
         </div>
       </div>
     </div>
@@ -591,10 +628,87 @@ function toggleTheme() {
   setTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-// Load saved theme
 const savedTheme = localStorage.getItem('theme') || 'dark';
 setTheme(savedTheme);
 themeToggle.addEventListener('click', toggleTheme);
+
+// ============================================================
+// FORMULA MODAL
+// ============================================================
+const formulaData = {
+  apparent: {
+    title: 'Apparent Power (S)',
+    sub: 'Daya semu total yang mengalir',
+    formula: 'S = V × I',
+    desc: '<strong>Keterangan:</strong><br>S = Daya semu (VA)<br>V = Tegangan (V)<br>I = Arus (A)<br><br>Daya semu adalah kombinasi daya aktif dan reaktif.'
+  },
+  reactive: {
+    title: 'Reactive Power (Q)',
+    sub: 'Daya reaktif yang tidak melakukan kerja',
+    formula: 'Q = √(S² - P²)',
+    desc: '<strong>Keterangan:</strong><br>Q = Daya reaktif (VAR)<br>S = Daya semu (VA)<br>P = Daya aktif (W)<br><br>Daya reaktif digunakan oleh beban induktif/kapasitif.'
+  },
+  cosphi: {
+    title: 'Cos Phi (Power Factor)',
+    sub: 'Rasio daya aktif terhadap daya semu',
+    formula: 'PF = cos φ = P / S',
+    desc: '<strong>Keterangan:</strong><br>PF = Power Factor<br>P = Daya aktif (W)<br>S = Daya semu (VA)<br><br>PF = 1 ideal, PF < 0.85 kurang baik.'
+  },
+  efficiency: {
+    title: 'Efficiency (η)',
+    sub: 'Efisiensi daya dalam persen',
+    formula: 'η = PF × 100%',
+    desc: '<strong>Keterangan:</strong><br>η = Efisiensi (%<br>PF = Power Factor<br><br>Semakin tinggi efisiensi, semakin baik pemanfaatan daya.'
+  },
+  frequency: {
+    title: 'Frequency (f)',
+    sub: 'Frekuensi listrik AC',
+    formula: 'f = 50 Hz (standar PLN)',
+    desc: '<strong>Keterangan:</strong><br>f = Frekuensi (Hz)<br><br>Standar PLN di Indonesia adalah 50 Hz.<br>Penyimpangan ±2 Hz masih dianggap normal.'
+  },
+  voltage: {
+    title: 'AC Voltage (V)',
+    sub: 'Tegangan listrik efektif',
+    formula: 'V = Vrms (Root Mean Square)',
+    desc: '<strong>Keterangan:</strong><br>V = Tegangan efektif (V)<br><br>Batas normal: 210-240V.<br><190V = Low Voltage, >250V = High Voltage.'
+  },
+  current: {
+    title: 'AC Current (I)',
+    sub: 'Arus listrik yang mengalir',
+    formula: 'I = P / (V × PF)',
+    desc: '<strong>Keterangan:</strong><br>I = Arus (A)<br>P = Daya (W)<br>V = Tegangan (V)<br>PF = Power Factor<br><br>Arus berbanding terbalik dengan tegangan dan PF.'
+  },
+  power: {
+    title: 'AC Power (P)',
+    sub: 'Daya aktif yang digunakan',
+    formula: 'P = V × I × PF',
+    desc: '<strong>Keterangan:</strong><br>P = Daya aktif (W)<br>V = Tegangan (V)<br>I = Arus (A)<br>PF = Power Factor<br><br>Ini adalah daya yang benar-benar digunakan untuk kerja.'
+  }
+};
+
+function openFormula(key) {
+  const data = formulaData[key];
+  if (!data) return;
+  document.getElementById('modalTitle').textContent = data.title;
+  document.getElementById('modalSub').textContent = data.sub;
+  document.getElementById('modalFormula').textContent = data.formula;
+  document.getElementById('modalDesc').innerHTML = data.desc;
+  document.getElementById('formulaModal').classList.add('active');
+}
+
+function closeFormula() {
+  document.getElementById('formulaModal').classList.remove('active');
+}
+
+// Tutup modal saat klik overlay
+document.getElementById('formulaModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFormula();
+});
+
+// Tutup modal dengan tombol ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeFormula();
+});
 
 // ============================================================
 // KONFIGURASI MQTT
@@ -638,7 +752,6 @@ let filteredPower = { time:[], voltage:[], current:[], power:[] };
 
 let chartTempHum, chartWaterSoil, chartPower;
 
-// Thresholds
 let houseVA = 1300;
 let maxCurrent = 5.9;
 let maxPower = 1300;
@@ -666,7 +779,6 @@ const rfidStatus = document.getElementById('rfidStatus');
 const historyBox = document.getElementById('historyBox');
 const dataCount = document.getElementById('dataCount');
 
-// Power DOM
 const pzV = document.getElementById('pzV');
 const pzA = document.getElementById('pzA');
 const pzW = document.getElementById('pzW');
@@ -684,7 +796,6 @@ const indPower = document.getElementById('indPower');
 const indPF = document.getElementById('indPF');
 const houseVAInput = document.getElementById('houseVA');
 
-// Power Details
 const pzApparent = document.getElementById('pzApparent');
 const pzReactive = document.getElementById('pzReactive');
 const pzCosPhi = document.getElementById('pzCosPhi');
@@ -694,7 +805,6 @@ const pzVoltageDetail = document.getElementById('pzVoltageDetail');
 const pzCurrentDetail = document.getElementById('pzCurrentDetail');
 const pzPowerDetail = document.getElementById('pzPowerDetail');
 
-// Watering DOM
 const wateringStatusBadge = document.getElementById('wateringStatusBadge');
 const wateringModeBadge = document.getElementById('wateringModeBadge');
 const wateringSoilDisplay = document.getElementById('wateringSoilDisplay');
@@ -720,7 +830,6 @@ function setHistoryList(arr){ if(!arr||arr.length===0) return; const items=arr.m
 function applyFilter() {
   const now = Date.now();
   const cutoff = now - currentFilterHours * 3600 * 1000;
-  // Sensor
   let idx = 0;
   for(let i=0; i<sensorData.time.length; i++) {
     if(sensorData.time[i] >= cutoff) { idx = i; break; }
@@ -730,7 +839,6 @@ function applyFilter() {
   filteredSensor.hum = sensorData.hum.slice(idx);
   filteredSensor.soil = sensorData.soil.slice(idx);
   filteredSensor.water = sensorData.water.slice(idx);
-  // Power
   let idxP = 0;
   for(let i=0; i<powerData.time.length; i++) {
     if(powerData.time[i] >= cutoff) { idxP = i; break; }
@@ -812,7 +920,6 @@ function updateCharts() {
     chartWaterSoil.data.datasets[1].data = filteredSensor.soil;
     chartWaterSoil.update();
   }
-  // Power chart menggunakan timestamp sendiri (bisa beda)
   const pLabels = filteredPower.time.map(ts => new Date(ts).toLocaleTimeString());
   if(chartPower) {
     chartPower.data.labels = pLabels;
@@ -868,7 +975,6 @@ function showWateringMsg(msg, ok=true) {
   wateringMsg.style.color = ok ? '#10b981' : '#ef4444';
   setTimeout(() => { wateringMsg.textContent = ''; }, 3000);
 }
-
 function updateWateringUI(status, mode, soil, threshold) {
   if(status === 'ON') { wateringStatusBadge.textContent = '🟢 ON'; wateringStatusBadge.className = 'watering-status-badge on'; }
   else { wateringStatusBadge.textContent = '🔴 OFF'; wateringStatusBadge.className = 'watering-status-badge off'; }
@@ -931,7 +1037,6 @@ function updatePowerUI(data) {
   const wh = data.energy || 0;
   const freq = data.frequency || 0;
   const va = (v * a) || 0;
-  // reactive power = sqrt(apparent^2 - real^2)
   let reactive = 0;
   if (va > 0 && w <= va) {
     reactive = Math.sqrt(va * va - w * w);
@@ -941,7 +1046,6 @@ function updatePowerUI(data) {
 
   updateThresholds(v);
 
-  // Main grid
   pzV.innerHTML = v.toFixed(1) + ' <span class="power-unit">V</span>';
   pzA.innerHTML = a.toFixed(2) + ' <span class="power-unit">A</span>';
   pzW.innerHTML = w.toFixed(1) + ' <span class="power-unit">W</span>';
@@ -949,7 +1053,6 @@ function updatePowerUI(data) {
   pzPF.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
   pzWh.innerHTML = wh.toFixed(3) + ' <span class="power-unit">kWh</span>';
 
-  // Status indicators
   let vStat = updateStatus(v, 190, 250, 'voltage');
   vStatus.textContent = vStat.label;
   vStatus.className = 'status-badge ' + vStat.cls;
@@ -970,7 +1073,6 @@ function updatePowerUI(data) {
   pfStatus.className = 'status-badge ' + pfStat.cls;
   indPF.innerHTML = `<span class="indicator-dot ${pfStat.dot}"></span> ${pfStat.label}`;
 
-  // Power details
   pzApparent.innerHTML = va.toFixed(1) + ' <span class="power-unit">VA</span>';
   pzReactive.innerHTML = reactive.toFixed(1) + ' <span class="power-unit">VAR</span>';
   pzCosPhi.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
@@ -983,7 +1085,6 @@ function updatePowerUI(data) {
   if(v > 0) pzStatus.innerHTML = '🟢 PZEM Connected';
   else pzStatus.innerHTML = '🔴 PZEM Not Detected';
 
-  // Tambahkan ke chart power
   const ts = Date.now();
   addPowerDataPoint(ts, v, a, w);
 }
@@ -1070,7 +1171,6 @@ function processSensorData(data) {
     updateWaterUI(data.water_level);
   }
   if(data.pump_status) updatePumpUI(data.pump_status, data.pump_mode || 'AUTO');
-  // Watering status from sensor
   if(data.watering_status !== undefined) {
     updateWateringUI(data.watering_status, data.watering_mode || 'AUTO', data.soil, data.soil_threshold);
     if(data.soil_threshold !== undefined) {
@@ -1078,7 +1178,6 @@ function processSensorData(data) {
       document.getElementById('waterThreshold').value = data.soil_threshold;
     }
   }
-  // Power from sensor (if pzem fields exist)
   if(data.pzem_voltage !== undefined) {
     updatePowerUI({
       voltage: data.pzem_voltage,
@@ -1089,7 +1188,6 @@ function processSensorData(data) {
       frequency: data.pzem_frequency
     });
   }
-  // Add to sensor chart
   const ts = Date.now();
   addSensorDataPoint(ts, data.temp || 0, data.hum || 0, data.soil || 0, data.water_level || 0);
 }
