@@ -7,7 +7,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ===== CSS VARIABLES (DEFAULT DARK) ===== */
+    /* ===== CSS VARIABLES ===== */
     :root {
       --bg-body: #0b1120;
       --bg-card: rgba(255,255,255,0.04);
@@ -117,6 +117,27 @@
     .power-value { font-size:1.8rem; font-weight:700; color:var(--text-primary); line-height:1.2; }
     .power-unit { font-size:0.8rem; color:var(--text-muted); margin-left:4px; }
     .power-label { font-size:0.7rem; color:var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.04em; }
+    .power-details-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-card); }
+    .power-detail-item { background:var(--bg-card); border-radius:10px; padding:8px 12px; text-align:center; border:1px solid var(--border-card); cursor:pointer; transition:background 0.2s, transform 0.1s; }
+    .power-detail-item:hover { background:var(--bg-card-hover); transform:scale(1.02); }
+    .power-detail-item .value { font-size:1.2rem; font-weight:600; color:var(--text-primary); }
+    .power-detail-item .label { font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; }
+    .power-detail-item .click-hint { font-size:0.55rem; color:var(--text-muted); opacity:0.6; margin-top:2px; display:block; }
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay); backdrop-filter:blur(4px); z-index:999; justify-content:center; align-items:center; }
+    .modal-overlay.active { display:flex; }
+    .modal-box { background:var(--modal-bg); border-radius:20px; padding:28px 32px; max-width:480px; width:90%; border:1px solid var(--modal-border); box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative; animation:modalFade 0.25s ease; }
+    @keyframes modalFade { from { opacity:0; transform:scale(0.95) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer; transition:0.2s; }
+    .modal-close:hover { color:var(--text-primary); transform:rotate(90deg); }
+    .modal-title { font-size:1.2rem; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
+    .modal-sub { font-size:0.9rem; color:var(--text-secondary); margin-bottom:16px; }
+    .modal-formula { background:var(--bg-input); padding:12px 16px; border-radius:10px; font-family:'Courier New',monospace; font-size:1.1rem; color:var(--text-primary); border:1px solid var(--border-input); margin-bottom:12px; }
+    .modal-desc { font-size:0.9rem; color:var(--text-secondary); line-height:1.6; }
+    .modal-desc strong { color:var(--text-primary); }
+    .status-badge { display:inline-block; padding:4px 12px; border-radius:30px; font-size:0.7rem; font-weight:600; margin-top:4px; }
+    .status-badge.normal { background:#10b981; color:#fff; }
+    .status-badge.warning { background:#f59e0b; color:#000; }
+    .status-badge.danger { background:#ef4444; color:#fff; }
     .indicator-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
     .indicator-item { display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:10px 14px; border-radius:10px; border:1px solid var(--border-card); transition:background 0.3s; color:var(--text-primary); }
     .indicator-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px; }
@@ -174,7 +195,7 @@
     .input-field::placeholder { color:var(--text-muted); }
     .footer { text-align:center; margin-top:32px; color:var(--text-muted); font-size:0.8rem; border-top:1px solid var(--border-card); padding-top:20px; transition:color 0.3s, border 0.3s; }
     @media (max-width:1024px) { .grid-4 { grid-template-columns:repeat(2,1fr); } }
-    @media (max-width:768px) { .grid-4, .grid-2 { grid-template-columns:1fr; } .power-monitor-grid { grid-template-columns:1fr 1fr; } .sensor-grid { grid-template-columns:1fr 1fr; } .indicator-grid { grid-template-columns:1fr; } .header { flex-direction:column; align-items:stretch; text-align:center; } .header-right { justify-content:center; } }
+    @media (max-width:768px) { .grid-4, .grid-2 { grid-template-columns:1fr; } .power-monitor-grid { grid-template-columns:1fr 1fr; } .power-details-grid { grid-template-columns:1fr 1fr; } .sensor-grid { grid-template-columns:1fr 1fr; } .indicator-grid { grid-template-columns:1fr; } .header { flex-direction:column; align-items:stretch; text-align:center; } .header-right { justify-content:center; } .modal-box { padding:20px; } }
   </style>
 </head>
 <body>
@@ -199,9 +220,9 @@
     <div class="filter-right"><span id="dataCount">0</span> data points</div>
   </div>
 
-  <!-- ========== LAMPU 4 (FULL FEATURES) ========== -->
+  <!-- ========== LAMPU 4 ========== -->
   <div class="grid-4" id="lampContainer">
-    <!-- Lampu 1 (dengan mode Fan) -->
+    <!-- Lampu 1 -->
     <div class="lamp-card" data-lamp="1">
       <div class="lamp-icon off" id="lampIcon1">💡</div>
       <div class="lamp-title" id="lampTitle1">LAMPU 1</div>
@@ -236,7 +257,6 @@
         </div>
       </div>
     </div>
-
     <!-- Lampu 2 -->
     <div class="lamp-card" data-lamp="2">
       <div class="lamp-icon off" id="lampIcon2">💡</div>
@@ -259,7 +279,6 @@
         <div class="timer-remain">Timer tersisa: <span id="timerRemain2">0s</span></div>
       </div>
     </div>
-
     <!-- Lampu 3 -->
     <div class="lamp-card" data-lamp="3">
       <div class="lamp-icon off" id="lampIcon3">💡</div>
@@ -282,7 +301,6 @@
         <div class="timer-remain">Timer tersisa: <span id="timerRemain3">0s</span></div>
       </div>
     </div>
-
     <!-- Lampu 4 -->
     <div class="lamp-card" data-lamp="4">
       <div class="lamp-icon off" id="lampIcon4">💡</div>
@@ -307,7 +325,7 @@
     </div>
   </div>
 
-  <!-- ========== SENSOR + DOOR/PUMP UTAMA ========== -->
+  <!-- ========== SENSOR + DOOR/PUMP ========== -->
   <div class="grid-2">
     <div class="card">
       <div class="card-title"><span class="icon">🌡️</span> Sensor Real-time</div>
@@ -348,6 +366,19 @@
       <div class="indicator-item"><span>⚡ Arus</span><span id="indCurrent"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>💪 Daya</span><span id="indPower"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>📊 Power Factor</span><span id="indPF"><span class="indicator-dot green"></span> Normal</span></div>
+    </div>
+    <div class="power-details-grid">
+      <div class="power-detail-item" onclick="openFormula('apparent')"><div class="value" id="pzApparent">-- <span class="power-unit">VA</span></div><div class="label">Apparent Power (S)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('reactive')"><div class="value" id="pzReactive">-- <span class="power-unit">VAR</span></div><div class="label">Reactive Power (Q)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('cosphi')"><div class="value" id="pzCosPhi">-- <span class="power-unit">PF</span></div><div class="label">Cos Phi (PF)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('efficiency')"><div class="value" id="pzEff">-- <span class="power-unit">%</span></div><div class="label">Efficiency (PF×100)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('frequency')"><div class="value" id="pzFreq">-- <span class="power-unit">Hz</span></div><div class="label">Frequency</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('voltage')"><div class="value" id="pzVoltageDetail">-- <span class="power-unit">V</span></div><div class="label">AC Voltage</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('current')"><div class="value" id="pzCurrentDetail">-- <span class="power-unit">A</span></div><div class="label">AC Current</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('power')"><div class="value" id="pzPowerDetail">-- <span class="power-unit">W</span></div><div class="label">AC Power (P)</div><span class="click-hint">↗ klik rumus</span></div>
+    </div>
+    <div class="modal-overlay" id="formulaModal">
+      <div class="modal-box"><button class="modal-close" onclick="closeFormula()">✕</button><div class="modal-title" id="modalTitle">Apparent Power</div><div class="modal-sub" id="modalSub">Daya semu (S)</div><div class="modal-formula" id="modalFormula">S = V × I</div><div class="modal-desc" id="modalDesc"><strong>Keterangan:</strong><br>S = Daya semu (VA)<br>V = Tegangan (V)<br>I = Arus (A)</div></div>
     </div>
     <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:12px;" id="pzStatus">🟢 PZEM Connected</div>
   </div>
@@ -553,7 +584,7 @@ const wateringThresholdDisplay = document.getElementById('wateringThresholdDispl
 const wateringMsg = document.getElementById('wateringMsg');
 
 // ============================================================
-// STORAGE FUNCTIONS
+// STORAGE
 // ============================================================
 function loadGraphData() {
   try {
@@ -587,7 +618,7 @@ function addHistoryItem(uid,time){ let h=loadHistory(); h.unshift({uid,time}); i
 function setHistoryList(arr){ if(!arr||arr.length===0) return; const items=arr.map(a=>({uid:a.uid,time:a.time})); saveHistory(items); displayHistory(items); }
 
 // ============================================================
-// FILTER & DATA
+// FILTER
 // ============================================================
 function applyFilter() {
   const now = Date.now();
@@ -852,11 +883,51 @@ function updatePowerUI(data) {
   let pfStat = updateStatus(pf, 0, 0.85, 'pf');
   pfStatus.textContent = pfStat.label; pfStatus.className = 'status-badge ' + pfStat.cls;
   indPF.innerHTML = `<span class="indicator-dot ${pfStat.dot}"></span> ${pfStat.label}`;
+  pzApparent.innerHTML = va.toFixed(1) + ' <span class="power-unit">VA</span>';
+  pzReactive.innerHTML = reactive.toFixed(1) + ' <span class="power-unit">VAR</span>';
+  pzCosPhi.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
+  pzEff.innerHTML = (pf * 100).toFixed(1) + ' <span class="power-unit">%</span>';
+  pzFreq.innerHTML = freq.toFixed(1) + ' <span class="power-unit">Hz</span>';
+  pzVoltageDetail.innerHTML = v.toFixed(1) + ' <span class="power-unit">V</span>';
+  pzCurrentDetail.innerHTML = a.toFixed(2) + ' <span class="power-unit">A</span>';
+  pzPowerDetail.innerHTML = w.toFixed(1) + ' <span class="power-unit">W</span>';
   if(v > 0) pzStatus.innerHTML = '🟢 PZEM Connected';
   else pzStatus.innerHTML = '🔴 PZEM Not Detected';
   const ts = Date.now();
   addPowerDataPoint(ts, v, a, w);
 }
+
+// ============================================================
+// FORMULA MODAL
+// ============================================================
+const formulaData = {
+  apparent: { title: 'Apparent Power (S)', sub: 'Daya semu total yang mengalir', formula: 'S = V × I', desc: '<strong>Keterangan:</strong><br>S = Daya semu (VA)<br>V = Tegangan (V)<br>I = Arus (A)' },
+  reactive: { title: 'Reactive Power (Q)', sub: 'Daya reaktif yang tidak melakukan kerja', formula: 'Q = √(S² - P²)', desc: '<strong>Keterangan:</strong><br>Q = Daya reaktif (VAR)<br>S = Daya semu (VA)<br>P = Daya aktif (W)' },
+  cosphi: { title: 'Cos Phi (Power Factor)', sub: 'Rasio daya aktif terhadap daya semu', formula: 'PF = cos φ = P / S', desc: '<strong>Keterangan:</strong><br>PF = Power Factor<br>P = Daya aktif (W)<br>S = Daya semu (VA)<br>PF = 1 ideal, PF < 0.85 kurang baik.' },
+  efficiency: { title: 'Efficiency (η)', sub: 'Efisiensi daya dalam persen', formula: 'η = PF × 100%', desc: '<strong>Keterangan:</strong><br>η = Efisiensi (%)<br>PF = Power Factor' },
+  frequency: { title: 'Frequency (f)', sub: 'Frekuensi listrik AC', formula: 'f = 50 Hz (standar PLN)', desc: '<strong>Keterangan:</strong><br>f = Frekuensi (Hz)<br>Standar PLN di Indonesia adalah 50 Hz.' },
+  voltage: { title: 'AC Voltage (V)', sub: 'Tegangan listrik efektif', formula: 'V = Vrms (Root Mean Square)', desc: '<strong>Keterangan:</strong><br>V = Tegangan efektif (V)<br>Batas normal: 210-240V.' },
+  current: { title: 'AC Current (I)', sub: 'Arus listrik yang mengalir', formula: 'I = P / (V × PF)', desc: '<strong>Keterangan:</strong><br>I = Arus (A)<br>P = Daya (W)<br>V = Tegangan (V)<br>PF = Power Factor' },
+  power: { title: 'AC Power (P)', sub: 'Daya aktif yang digunakan', formula: 'P = V × I × PF', desc: '<strong>Keterangan:</strong><br>P = Daya aktif (W)<br>V = Tegangan (V)<br>I = Arus (A)<br>PF = Power Factor' }
+};
+function openFormula(key) {
+  const data = formulaData[key];
+  if (!data) return;
+  document.getElementById('modalTitle').textContent = data.title;
+  document.getElementById('modalSub').textContent = data.sub;
+  document.getElementById('modalFormula').textContent = data.formula;
+  document.getElementById('modalDesc').innerHTML = data.desc;
+  document.getElementById('formulaModal').classList.add('active');
+}
+function closeFormula() {
+  document.getElementById('formulaModal').classList.remove('active');
+}
+document.getElementById('formulaModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFormula();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeFormula();
+});
 
 // ============================================================
 // MQTT PUBLISH FUNCTIONS
