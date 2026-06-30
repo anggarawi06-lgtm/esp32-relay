@@ -7,9 +7,12 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* ========== RESET & BASE ========== */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
     body { background:#0b1120; color:#e2e8f0; padding:20px; min-height:100vh; }
     .container { max-width:1440px; margin:0 auto; }
+
+    /* ========== HEADER ========== */
     .header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:rgba(255,255,255,0.04); backdrop-filter:blur(12px); padding:16px 24px; border-radius:24px; border:1px solid rgba(255,255,255,0.06); margin-bottom:24px; }
     .header-left { display:flex; align-items:center; gap:12px; }
     .header-left h1 { font-size:1.6rem; font-weight:700; }
@@ -19,16 +22,27 @@
     .conn-status.online { background:#10b981; color:#fff; }
     .conn-status.offline { background:#ef4444; color:#fff; }
     .conn-status .dot { width:8px; height:8px; border-radius:50%; background:currentColor; display:inline-block; }
+
+    /* ========== FILTER BAR ========== */
     .filter-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:rgba(255,255,255,0.04); padding:12px 20px; border-radius:18px; border:1px solid rgba(255,255,255,0.06); margin-bottom:24px; }
     .filter-btn { padding:6px 16px; border:none; border-radius:30px; background:#1e293b; color:#94a3b8; font-weight:500; font-size:0.8rem; cursor:pointer; transition:0.2s; border:1px solid transparent; }
     .filter-btn:hover { background:#334155; color:#f1f5f9; }
     .filter-btn.active { background:#2563eb; color:#fff; border-color:#3b82f6; box-shadow:0 0 20px rgba(37,99,235,0.2); }
+    .filter-btn .badge-count { background:rgba(255,255,255,0.1); border-radius:12px; padding:0 8px; margin-left:4px; font-size:0.7rem; }
+
+    /* ========== GRID ========== */
     .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:24px; }
     .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:24px; }
+
+    /* ========== CARDS ========== */
     .card { background:rgba(255,255,255,0.04); backdrop-filter:blur(8px); border-radius:20px; padding:20px; border:1px solid rgba(255,255,255,0.06); transition:0.2s; }
     .card:hover { border-color:rgba(255,255,255,0.12); }
     .card-title { font-weight:600; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.04em; color:#94a3b8; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
     .card-title .icon { font-size:1.2rem; }
+    .card-title .badge-pzem { background:#1e293b; padding:2px 10px; border-radius:30px; font-size:0.65rem; color:#94a3b8; border:1px solid #334155; }
+
+    /* ========== LAMP CARDS ========== */
     .lamp-card { background:rgba(255,255,255,0.04); border-radius:18px; padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
     .lamp-icon { font-size:2.4rem; transition:0.2s; }
     .lamp-icon.on { color:#fbbf24; filter:drop-shadow(0 0 12px rgba(251,191,36,0.3)); }
@@ -44,16 +58,31 @@
     .btn-primary { background:#2563eb; color:#fff; }
     .btn-water { background:#0e7490; color:#fff; }
     .btn-sm { padding:4px 12px; font-size:0.7rem; }
+    .btn-warning { background:#f59e0b; color:#0b1120; }
+
+    /* ========== SENSOR GRID ========== */
     .sensor-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
     .sensor-item { background:rgba(255,255,255,0.04); border-radius:12px; padding:12px; text-align:center; }
     .sensor-value { font-size:2rem; font-weight:700; color:#f1f5f9; }
     .sensor-unit { font-size:0.8rem; color:#64748b; margin-left:2px; }
     .sensor-label { font-size:0.7rem; color:#64748b; margin-top:2px; }
-    .power-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-    .power-item { background:rgba(255,255,255,0.04); border-radius:14px; padding:12px; text-align:center; border:1px solid rgba(255,255,255,0.04); }
-    .power-value { font-size:1.5rem; font-weight:700; color:#fbbf24; }
-    .power-unit { font-size:0.7rem; color:#64748b; }
-    .power-label { font-size:0.65rem; color:#64748b; margin-top:2px; text-transform:uppercase; letter-spacing:0.04em; }
+
+    /* ========== PZEM POWER ========== */
+    .pzem-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .pzem-item { background:rgba(255,255,255,0.04); border-radius:14px; padding:14px; text-align:center; border:1px solid rgba(255,255,255,0.04); transition:0.2s; }
+    .pzem-item:hover { border-color:rgba(255,255,255,0.12); }
+    .pzem-value { font-size:1.8rem; font-weight:700; color:#fbbf24; line-height:1.2; }
+    .pzem-value.warning { color:#f59e0b; }
+    .pzem-value.danger { color:#ef4444; }
+    .pzem-unit { font-size:0.7rem; color:#64748b; }
+    .pzem-label { font-size:0.65rem; color:#64748b; margin-top:2px; text-transform:uppercase; letter-spacing:0.04em; }
+    .pzem-status-indicator { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+    .pzem-status-indicator.green { background:#10b981; }
+    .pzem-status-indicator.yellow { background:#f59e0b; }
+    .pzem-status-indicator.red { background:#ef4444; }
+    .pzem-status-text { font-size:0.7rem; font-weight:500; }
+
+    /* ========== WATER LEVEL ========== */
     .water-container { background:#1e293b; border-radius:16px; height:200px; position:relative; overflow:hidden; margin-bottom:12px; }
     .water-fill { position:absolute; bottom:0; left:0; width:100%; background:linear-gradient(135deg,#0284c7,#0ea5e9); transition:height 0.4s ease; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:1.8rem; }
     .threshold-bar { background:#1e293b; border-radius:12px; padding:10px 14px; margin-top:10px; position:relative; }
@@ -62,16 +91,22 @@
     .threshold-marker { position:absolute; top:-4px; width:3px; height:14px; border-radius:2px; }
     .threshold-marker.low { background:#ef4444; }
     .threshold-marker.high { background:#10b981; }
+
+    /* ========== PUMP ========== */
     .pump-control { background:#1e293b; border-radius:14px; padding:14px; text-align:center; }
     .pump-badge { display:inline-block; padding:4px 14px; border-radius:30px; font-weight:600; font-size:0.8rem; }
     .pump-badge.on { background:#10b981; color:#fff; }
     .pump-badge.off { background:#ef4444; color:#fff; }
     .pump-badge.auto { background:#8b5cf6; color:#fff; }
+
+    /* ========== RFID ========== */
     .rfid-box { background:#1e293b; border-radius:14px; padding:14px 18px; }
     .rfid-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #334155; }
     .rfid-row:last-child { border-bottom:none; }
     .rfid-label { color:#94a3b8; font-size:0.85rem; }
     .rfid-value { color:#fbbf24; font-family:monospace; font-weight:600; }
+
+    /* ========== HISTORY ========== */
     .history-box { max-height:200px; overflow-y:auto; background:#1e293b; border-radius:14px; padding:8px; }
     .history-box::-webkit-scrollbar { width:4px; }
     .history-box::-webkit-scrollbar-track { background:transparent; }
@@ -79,6 +114,8 @@
     .history-item { background:rgba(255,255,255,0.04); padding:8px 14px; margin:4px 0; border-radius:10px; display:flex; justify-content:space-between; font-size:0.85rem; border-left:3px solid #2563eb; }
     .history-item .uid { font-family:monospace; font-weight:600; }
     .history-item .time { color:#94a3b8; font-size:0.75rem; }
+
+    /* ========== CALIBRATION ========== */
     .cal-group { margin-bottom:14px; }
     .cal-group label { display:block; font-weight:500; font-size:0.8rem; color:#94a3b8; margin-bottom:4px; }
     .cal-group input { width:100%; padding:8px 14px; border:1px solid #334155; border-radius:10px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; }
@@ -89,30 +126,50 @@
     .cal-msg { text-align:center; font-size:0.85rem; margin-top:10px; min-height:24px; }
     .cal-msg.success { color:#10b981; }
     .cal-msg.error { color:#ef4444; }
-    .chart-container { height:220px; width:100%; margin-top:8px; }
-    .chart-container.power-chart { height:200px; }
-    .footer { text-align:center; margin-top:32px; color:#475569; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:20px; }
+
+    /* ========== WATERING ========== */
     .watering-card { background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); }
     .watering-status-badge { font-size:1.1rem; padding:4px 16px; border-radius:30px; font-weight:600; }
     .watering-status-badge.on { background:#10b981; color:#fff; }
     .watering-status-badge.off { background:#ef4444; color:#fff; }
     .watering-mode-badge { font-size:0.8rem; padding:2px 12px; border-radius:30px; background:#8b5cf6; color:#fff; }
+
+    /* ========== CHARTS ========== */
+    .chart-container { height:220px; width:100%; margin-top:8px; }
+    .chart-container.power-chart { height:220px; }
+
+    /* ========== INPUT ========== */
     .input-group { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .input-field { flex:2; padding:10px 16px; border:1px solid #334155; border-radius:30px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; min-width:140px; }
     .input-field:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
     .input-field::placeholder { color:#64748b; }
-    @media (max-width:1024px) { .grid-4 { grid-template-columns:repeat(2,1fr); } }
-    @media (max-width:768px) { .grid-4,.grid-2 { grid-template-columns:1fr; } .power-grid { grid-template-columns:repeat(2,1fr); } .sensor-grid { grid-template-columns:repeat(2,1fr); } .header { flex-direction:column; align-items:stretch; text-align:center; } }
+
+    /* ========== FOOTER ========== */
+    .footer { text-align:center; margin-top:32px; color:#475569; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:20px; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width:1024px) {
+      .grid-4 { grid-template-columns:repeat(2,1fr); }
+      .grid-3 { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:768px) {
+      .grid-4,.grid-2,.grid-3 { grid-template-columns:1fr; }
+      .sensor-grid { grid-template-columns:repeat(2,1fr); }
+      .pzem-grid { grid-template-columns:repeat(2,1fr); }
+      .header { flex-direction:column; align-items:stretch; text-align:center; }
+    }
   </style>
 </head>
 <body>
 <div class="container">
 
+  <!-- ==================== HEADER ==================== -->
   <header class="header">
     <div class="header-left"><h1>⚡<span>Smart</span>IoT</h1><span class="badge-esp">ESP32 v3.0</span></div>
     <div class="conn-status" id="connStatus"><span class="dot"></span> Menghubungkan...</div>
   </header>
 
+  <!-- ==================== FILTER BAR ==================== -->
   <div class="filter-bar">
     <label>📊 Tampilkan:</label>
     <button class="filter-btn active" data-hours="24">24 Jam</button>
@@ -120,9 +177,10 @@
     <button class="filter-btn" data-hours="6">6 Jam</button>
     <button class="filter-btn" data-hours="1">1 Jam</button>
     <div style="flex:1; text-align:right; font-size:0.8rem; color:#64748b;"><span id="dataCount">0</span> data points</div>
+    <button class="btn btn-sm btn-primary" onclick="requestStatus()" style="margin-left:8px;">🔄 Sync</button>
   </div>
 
-  <!-- LAMPU 4 -->
+  <!-- ==================== LAMPU 4 ==================== -->
   <div class="grid-4">
     <div class="lamp-card"><div class="lamp-icon off" id="lampIcon1">💡</div><div class="lamp-title">LAMPU 1</div><div class="lamp-status off" id="lampStatus1">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(1,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(1,'OFF')">OFF</button></div></div>
     <div class="lamp-card"><div class="lamp-icon off" id="lampIcon2">💡</div><div class="lamp-title">LAMPU 2</div><div class="lamp-status off" id="lampStatus2">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(2,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(2,'OFF')">OFF</button></div></div>
@@ -130,9 +188,10 @@
     <div class="lamp-card"><div class="lamp-icon off" id="lampIcon4">💡</div><div class="lamp-title">LAMPU 4</div><div class="lamp-status off" id="lampStatus4">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(4,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(4,'OFF')">OFF</button></div></div>
   </div>
 
-  <!-- SENSOR + DOOR/PUMP -->
+  <!-- ==================== SENSOR + DOOR/PUMP ==================== -->
   <div class="grid-2">
-    <div class="card"><div class="card-title"><span class="icon">🌡️</span> Sensor Real-time</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🌡️</span> Sensor Real-time</div>
       <div class="sensor-grid">
         <div class="sensor-item"><div class="sensor-value" id="sTemp">--<span class="sensor-unit">°C</span></div><div class="sensor-label">Temperature</div></div>
         <div class="sensor-item"><div class="sensor-value" id="sHum">--<span class="sensor-unit">%</span></div><div class="sensor-label">Humidity</div></div>
@@ -140,7 +199,8 @@
         <div class="sensor-item"><div class="sensor-value" id="sWater">--<span class="sensor-unit">%</span></div><div class="sensor-label">Water Level</div></div>
       </div>
     </div>
-    <div class="card"><div class="card-title"><span class="icon">🚪</span> Kontrol</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🚪</span> Kontrol</div>
       <button class="btn btn-primary" onclick="openDoorManual()" style="width:100%; padding:14px; margin-bottom:16px;">🔓 BUKA PINTU</button>
       <div class="pump-control">
         <div style="display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap;"><span>💧 PUMP UTAMA</span><span class="pump-badge off" id="pumpStatusBadge">OFF</span><span class="pump-badge auto" id="pumpModeBadge">AUTO</span></div>
@@ -153,23 +213,46 @@
     </div>
   </div>
 
-  <!-- POWER -->
+  <!-- ==================== PZEM-004T POWER MONITORING (UPGRADED) ==================== -->
   <div class="card" style="margin-bottom:24px;">
-    <div class="card-title"><span class="icon">⚡</span> Power Monitor <button class="btn btn-off btn-sm" onclick="resetEnergy()" style="margin-left:auto;">Reset Energy</button></div>
-    <div class="power-grid">
-      <div class="power-item"><div class="power-value" id="pzV">--</div><div class="power-unit">V</div><div class="power-label">Voltage</div></div>
-      <div class="power-item"><div class="power-value" id="pzA">--</div><div class="power-unit">A</div><div class="power-label">Current</div></div>
-      <div class="power-item"><div class="power-value" id="pzW">--</div><div class="power-unit">W</div><div class="power-label">Power</div></div>
-      <div class="power-item"><div class="power-value" id="pzWh">--</div><div class="power-unit">kWh</div><div class="power-label">Energy</div></div>
-      <div class="power-item"><div class="power-value" id="pzF">--</div><div class="power-unit">Hz</div><div class="power-label">Frequency</div></div>
-      <div class="power-item"><div class="power-value" id="pzPF">--</div><div class="power-unit">PF</div><div class="power-label">Power Factor</div></div>
+    <div class="card-title">
+      <span class="icon">⚡</span> PZEM-004T Power Monitoring
+      <span class="badge-pzem" id="pzemStatus">🟢 Online</span>
+      <button class="btn btn-off btn-sm" onclick="resetEnergy()" style="margin-left:auto;">Reset Energy</button>
     </div>
-    <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:8px;" id="pzStatus">🟢 PZEM Connected</div>
+
+    <!-- Status Indicators -->
+    <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:12px;">
+      <div><span class="pzem-status-indicator green" id="voltageStatusDot"></span> <span class="pzem-status-text" id="voltageStatusText">Tegangan Normal</span></div>
+      <div><span class="pzem-status-indicator green" id="currentStatusDot"></span> <span class="pzem-status-text" id="currentStatusText">Arus Normal</span></div>
+      <div><span class="pzem-status-indicator green" id="powerStatusDot"></span> <span class="pzem-status-text" id="powerStatusText">Daya Normal</span></div>
+      <div><span class="pzem-status-indicator green" id="pfStatusDot"></span> <span class="pzem-status-text" id="pfStatusText">PF ≥ 0.85</span></div>
+    </div>
+
+    <!-- Main PZEM Data Grid -->
+    <div class="pzem-grid">
+      <div class="pzem-item"><div class="pzem-value" id="pzV">--</div><div class="pzem-unit">V</div><div class="pzem-label">Voltage</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzA">--</div><div class="pzem-unit">A</div><div class="pzem-label">Current</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzW">--</div><div class="pzem-unit">W</div><div class="pzem-label">Active Power</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzVA">--</div><div class="pzem-unit">VA</div><div class="pzem-label">Apparent Power</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzVAR">--</div><div class="pzem-unit">VAR</div><div class="pzem-label">Reactive Power</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzPF">--</div><div class="pzem-unit">PF</div><div class="pzem-label">Power Factor</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzWh">--</div><div class="pzem-unit">kWh</div><div class="pzem-label">Total Energy</div></div>
+      <div class="pzem-item"><div class="pzem-value" id="pzF">--</div><div class="pzem-unit">Hz</div><div class="pzem-label">Frequency</div></div>
+    </div>
+
+    <!-- Additional info -->
+    <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:12px; font-size:0.75rem; color:#64748b; justify-content:space-between;">
+      <span>⚡ Daya Semu (VA) = V × I</span>
+      <span>🌀 Daya Reaktif (VAR) = √(VA² - P²)</span>
+      <span>📊 Faktor Daya (PF) = P / VA</span>
+    </div>
   </div>
 
-  <!-- WATER LEVEL + CALIBRATION -->
+  <!-- ==================== WATER LEVEL + CALIBRATION ==================== -->
   <div class="grid-2" style="margin-bottom:24px;">
-    <div class="card"><div class="card-title"><span class="icon">💧</span> Water Level</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">💧</span> Water Level</div>
       <div class="water-container"><div class="water-fill" id="waterFill" style="height:0%;"><span class="pct" id="waterPercent">0%</span></div></div>
       <div id="waterAlert" style="text-align:center; font-weight:600; margin-bottom:10px; min-height:24px;">Menunggu data...</div>
       <div class="threshold-bar">
@@ -221,53 +304,45 @@
       <button class="btn" style="background:#8b5cf6; color:#fff;" onclick="wateringCmd('AUTO')">🤖 AUTO</button>
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
-      <div class="cal-group">
-        <label>Threshold Kelembaban (%)</label>
-        <input type="number" id="waterThreshold" step="1" value="40">
-        <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Siram jika soil ≤ nilai ini</div>
-      </div>
-      <div class="cal-group">
-        <label>Durasi Penyiraman (detik)</label>
-        <input type="number" id="waterDuration" step="1" value="5">
-        <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Lama pompa menyala</div>
-      </div>
-      <div class="cal-group">
-        <label>Interval Minimal (detik)</label>
-        <input type="number" id="waterInterval" step="1" value="60">
-        <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Tunggu antar penyiraman</div>
-      </div>
+      <div class="cal-group"><label>Threshold Kelembaban (%)</label><input type="number" id="waterThreshold" step="1" value="40"><div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Siram jika soil ≤ nilai ini</div></div>
+      <div class="cal-group"><label>Durasi Penyiraman (detik)</label><input type="number" id="waterDuration" step="1" value="5"><div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Lama pompa menyala</div></div>
+      <div class="cal-group"><label>Interval Minimal (detik)</label><input type="number" id="waterInterval" step="1" value="60"><div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Tunggu antar penyiraman</div></div>
     </div>
     <button class="btn btn-water" onclick="sendWateringConfig()" style="margin-top:12px;">💾 Simpan Konfigurasi Penyiraman</button>
     <div id="wateringMsg" style="text-align:center; font-size:0.85rem; margin-top:8px; min-height:20px;"></div>
   </div>
 
-  <!-- CHARTS -->
+  <!-- ==================== CHARTS ==================== -->
   <div class="grid-2" style="margin-bottom:24px;">
     <div class="card"><div class="card-title"><span class="icon">📈</span> Temperature & Humidity</div><div class="chart-container"><canvas id="chartTempHum"></canvas></div></div>
     <div class="card"><div class="card-title"><span class="icon">📊</span> Water Level & Soil</div><div class="chart-container"><canvas id="chartWaterSoil"></canvas></div></div>
   </div>
+  
+  <!-- POWER CHART (Voltage, Current, Power) -->
   <div class="card" style="margin-bottom:24px;">
-    <div class="card-title"><span class="icon">⚡</span> Power Consumption (W)</div>
+    <div class="card-title"><span class="icon">⚡</span> Power Consumption (W) & Voltage (V) & Current (A)</div>
     <div class="chart-container power-chart"><canvas id="chartPower"></canvas></div>
   </div>
 
-  <!-- RFID + CARD -->
+  <!-- ==================== RFID + CARD ==================== -->
   <div class="grid-2" style="margin-bottom:24px;">
-    <div class="card"><div class="card-title"><span class="icon">🔑</span> RFID Access</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🔑</span> RFID Access</div>
       <div class="rfid-box"><div class="rfid-row"><span class="rfid-label">UID Terakhir</span><span class="rfid-value" id="rfidUid">---</span></div><div class="rfid-row"><span class="rfid-label">Status</span><span class="rfid-value" id="rfidStatus">Menunggu...</span></div></div>
     </div>
-    <div class="card"><div class="card-title"><span class="icon">💳</span> Card Management</div>
+    <div class="card">
+      <div class="card-title"><span class="icon">💳</span> Card Management</div>
       <div class="input-group"><input type="text" id="cardUid" class="input-field" placeholder="UID (contoh: AB12CD34)"><button class="btn btn-on" onclick="addCard()">Tambah</button><button class="btn btn-off" onclick="delCard()">Hapus</button></div>
     </div>
   </div>
 
-  <!-- HISTORY -->
+  <!-- ==================== HISTORY ==================== -->
   <div class="card" style="margin-bottom:24px;">
     <div class="card-title"><span class="icon">📜</span> Access History</div>
     <div class="history-box" id="historyBox"><div style="text-align:center; color:#64748b; padding:20px;">Belum ada history</div></div>
   </div>
 
-  <footer class="footer">© 2025 Smart IoT Dashboard Pro · ESP32 + MQTT</footer>
+  <footer class="footer">© 2025 Smart IoT Dashboard Pro · ESP32 + MQTT · PZEM-004T Advanced</footer>
 </div>
 
 <script>
@@ -302,8 +377,8 @@ const TOPICS = {
 };
 const HISTORY_STORAGE_KEY = 'rfid_history';
 let client = null, connected = false, currentFilterHours = 24;
-let rawData = { time:[], temp:[], hum:[], soil:[], water:[], power:[] };
-let filteredData = { time:[], temp:[], hum:[], soil:[], water:[], power:[] };
+let rawData = { time:[], temp:[], hum:[], soil:[], water:[], power:[], voltage:[], current:[] };
+let filteredData = { time:[], temp:[], hum:[], soil:[], water:[], power:[], voltage:[], current:[] };
 let chart1, chart2, chart3;
 
 // DOM refs
@@ -334,6 +409,27 @@ const wateringSoilDisplay = document.getElementById('wateringSoilDisplay');
 const wateringThresholdDisplay = document.getElementById('wateringThresholdDisplay');
 const wateringMsg = document.getElementById('wateringMsg');
 
+// PZEM refs
+const pzV = document.getElementById('pzV');
+const pzA = document.getElementById('pzA');
+const pzW = document.getElementById('pzW');
+const pzVA = document.getElementById('pzVA');
+const pzVAR = document.getElementById('pzVAR');
+const pzPF = document.getElementById('pzPF');
+const pzWh = document.getElementById('pzWh');
+const pzF = document.getElementById('pzF');
+const pzemStatus = document.getElementById('pzemStatus');
+
+// Status indicators
+const voltageStatusDot = document.getElementById('voltageStatusDot');
+const voltageStatusText = document.getElementById('voltageStatusText');
+const currentStatusDot = document.getElementById('currentStatusDot');
+const currentStatusText = document.getElementById('currentStatusText');
+const powerStatusDot = document.getElementById('powerStatusDot');
+const powerStatusText = document.getElementById('powerStatusText');
+const pfStatusDot = document.getElementById('pfStatusDot');
+const pfStatusText = document.getElementById('pfStatusText');
+
 // ============================================================
 // HISTORY
 // ============================================================
@@ -350,27 +446,122 @@ function setHistoryList(arr){ if(!arr||arr.length===0) return; const items=arr.m
 // ============================================================
 // GRAFIK
 // ============================================================
-function loadGraphData(){ try{ const s=localStorage.getItem('iot_graph_data'); if(s){ const d=JSON.parse(s); if(d.time){ rawData=d; applyFilter(); return true; } } }catch(e){} return false; }
-function saveGraphData(){ try{ localStorage.setItem('iot_graph_data',JSON.stringify(rawData)); }catch(e){} }
-function addDataPoint(ts,t,h,s,w,p){ rawData.time.push(ts); rawData.temp.push(t); rawData.hum.push(h); rawData.soil.push(s); rawData.water.push(w); rawData.power.push(p||0); if(rawData.time.length>500){ rawData.time.shift(); rawData.temp.shift(); rawData.hum.shift(); rawData.soil.shift(); rawData.water.shift(); rawData.power.shift(); } saveGraphData(); applyFilter(); }
+function loadGraphData(){
+  try{
+    const s=localStorage.getItem('iot_graph_data');
+    if(s){
+      const d=JSON.parse(s);
+      if(d.time && d.temp && d.hum && d.soil && d.water && d.power && d.voltage && d.current){
+        rawData = d;
+        applyFilter();
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+function saveGraphData(){
+  try{ localStorage.setItem('iot_graph_data',JSON.stringify(rawData)); }catch(e){}
+}
+function addDataPoint(ts,t,h,s,w,p,v,a){
+  rawData.time.push(ts);
+  rawData.temp.push(t);
+  rawData.hum.push(h);
+  rawData.soil.push(s);
+  rawData.water.push(w);
+  rawData.power.push(p||0);
+  rawData.voltage.push(v||0);
+  rawData.current.push(a||0);
+  if(rawData.time.length>500){
+    rawData.time.shift(); rawData.temp.shift(); rawData.hum.shift();
+    rawData.soil.shift(); rawData.water.shift(); rawData.power.shift();
+    rawData.voltage.shift(); rawData.current.shift();
+  }
+  saveGraphData();
+  applyFilter();
+}
 function applyFilter(){
-  if(rawData.time.length===0){ filteredData={time:[],temp:[],hum:[],soil:[],water:[],power:[]}; updateCharts(); return; }
+  if(rawData.time.length===0){
+    filteredData={time:[],temp:[],hum:[],soil:[],water:[],power:[],voltage:[],current:[]};
+    updateCharts();
+    return;
+  }
   const now=Date.now(), cutoff=now-currentFilterHours*3600000;
-  let idx=0; for(let i=0;i<rawData.time.length;i++){ if(rawData.time[i]>=cutoff){ idx=i; break; } }
-  filteredData.time=rawData.time.slice(idx); filteredData.temp=rawData.temp.slice(idx); filteredData.hum=rawData.hum.slice(idx);
-  filteredData.soil=rawData.soil.slice(idx); filteredData.water=rawData.water.slice(idx); filteredData.power=rawData.power.slice(idx);
-  dataCount.textContent=filteredData.time.length; updateCharts();
+  let idx=0;
+  for(let i=0;i<rawData.time.length;i++){ if(rawData.time[i]>=cutoff){ idx=i; break; } }
+  filteredData.time=rawData.time.slice(idx);
+  filteredData.temp=rawData.temp.slice(idx);
+  filteredData.hum=rawData.hum.slice(idx);
+  filteredData.soil=rawData.soil.slice(idx);
+  filteredData.water=rawData.water.slice(idx);
+  filteredData.power=rawData.power.slice(idx);
+  filteredData.voltage=rawData.voltage.slice(idx);
+  filteredData.current=rawData.current.slice(idx);
+  dataCount.textContent=filteredData.time.length;
+  updateCharts();
 }
 function initCharts(){
-  chart1=new Chart(document.getElementById('chartTempHum'),{type:'line',data:{labels:[],datasets:[{label:'Temp °C',data:[],borderColor:'#ef4444',borderWidth:2,fill:false,tension:0.2,pointRadius:1},{label:'Hum %',data:[],borderColor:'#3b82f6',borderWidth:2,fill:false,tension:0.2,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:12}}},scales:{x:{ticks:{color:'#64748b',maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
-  chart2=new Chart(document.getElementById('chartWaterSoil'),{type:'line',data:{labels:[],datasets:[{label:'Water %',data:[],borderColor:'#0ea5e9',borderWidth:2,fill:false,tension:0.2,pointRadius:1},{label:'Soil %',data:[],borderColor:'#10b981',borderWidth:2,fill:false,tension:0.2,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:12}}},scales:{x:{ticks:{color:'#64748b',maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
-  chart3=new Chart(document.getElementById('chartPower'),{type:'line',data:{labels:[],datasets:[{label:'Power (W)',data:[],borderColor:'#f59e0b',borderWidth:2,fill:true,backgroundColor:'rgba(245,158,11,0.08)',tension:0.2,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:12}}},scales:{x:{ticks:{color:'#64748b',maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  // Chart 1: Temp & Hum
+  chart1 = new Chart(document.getElementById('chartTempHum'),{
+    type:'line',
+    data:{ labels:[], datasets:[
+      { label:'Temp °C', data:[], borderColor:'#ef4444', borderWidth:2, fill:false, tension:0.2, pointRadius:1 },
+      { label:'Hum %', data:[], borderColor:'#3b82f6', borderWidth:2, fill:false, tension:0.2, pointRadius:1 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#94a3b8', boxWidth:12 } } }, scales:{ x:{ ticks:{ color:'#64748b', maxTicksLimit:10 }, grid:{ color:'rgba(255,255,255,0.04)' } }, y:{ ticks:{ color:'#64748b' }, grid:{ color:'rgba(255,255,255,0.04)' } } } }
+  });
+  // Chart 2: Water & Soil
+  chart2 = new Chart(document.getElementById('chartWaterSoil'),{
+    type:'line',
+    data:{ labels:[], datasets:[
+      { label:'Water %', data:[], borderColor:'#0ea5e9', borderWidth:2, fill:false, tension:0.2, pointRadius:1 },
+      { label:'Soil %', data:[], borderColor:'#10b981', borderWidth:2, fill:false, tension:0.2, pointRadius:1 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#94a3b8', boxWidth:12 } } }, scales:{ x:{ ticks:{ color:'#64748b', maxTicksLimit:10 }, grid:{ color:'rgba(255,255,255,0.04)' } }, y:{ ticks:{ color:'#64748b' }, grid:{ color:'rgba(255,255,255,0.04)' } } } }
+  });
+  // Chart 3: Power, Voltage, Current
+  chart3 = new Chart(document.getElementById('chartPower'),{
+    type:'line',
+    data:{ labels:[], datasets:[
+      { label:'Power (W)', data:[], borderColor:'#f59e0b', borderWidth:2, fill:true, backgroundColor:'rgba(245,158,11,0.08)', tension:0.2, pointRadius:1, yAxisID:'y' },
+      { label:'Voltage (V)', data:[], borderColor:'#ec4899', borderWidth:2, fill:false, tension:0.2, pointRadius:1, yAxisID:'y1' },
+      { label:'Current (A)', data:[], borderColor:'#8b5cf6', borderWidth:2, fill:false, tension:0.2, pointRadius:1, yAxisID:'y1' }
+    ]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{ labels:{ color:'#94a3b8', boxWidth:12 } }
+      },
+      scales:{
+        x:{ ticks:{ color:'#64748b', maxTicksLimit:10 }, grid:{ color:'rgba(255,255,255,0.04)' } },
+        y:{ type:'linear', display:true, position:'left', ticks:{ color:'#64748b' }, grid:{ color:'rgba(255,255,255,0.04)' }, title:{ display:true, text:'Power (W)', color:'#94a3b8' } },
+        y1:{ type:'linear', display:true, position:'right', ticks:{ color:'#64748b' }, grid:{ drawOnChartArea:false }, title:{ display:true, text:'Voltage / Current', color:'#94a3b8' } }
+      }
+    }
+  });
 }
 function updateCharts(){
-  const labels=filteredData.time.map(ts=>new Date(ts).toLocaleTimeString());
-  if(chart1){ chart1.data.labels=labels; chart1.data.datasets[0].data=filteredData.temp; chart1.data.datasets[1].data=filteredData.hum; chart1.update(); }
-  if(chart2){ chart2.data.labels=labels; chart2.data.datasets[0].data=filteredData.water; chart2.data.datasets[1].data=filteredData.soil; chart2.update(); }
-  if(chart3){ chart3.data.labels=labels; chart3.data.datasets[0].data=filteredData.power; chart3.update(); }
+  const labels = filteredData.time.map(ts=>new Date(ts).toLocaleTimeString());
+  if(chart1){
+    chart1.data.labels = labels;
+    chart1.data.datasets[0].data = filteredData.temp;
+    chart1.data.datasets[1].data = filteredData.hum;
+    chart1.update();
+  }
+  if(chart2){
+    chart2.data.labels = labels;
+    chart2.data.datasets[0].data = filteredData.water;
+    chart2.data.datasets[1].data = filteredData.soil;
+    chart2.update();
+  }
+  if(chart3){
+    chart3.data.labels = labels;
+    chart3.data.datasets[0].data = filteredData.power;
+    chart3.data.datasets[1].data = filteredData.voltage;
+    chart3.data.datasets[2].data = filteredData.current;
+    chart3.update();
+  }
 }
 
 // ============================================================
@@ -382,7 +573,8 @@ function updateLabels(){
   dispLow.textContent=l; dispHigh.textContent=h; lowMarker.style.left=l+'%'; highMarker.style.left=h+'%';
 }
 function updateWaterUI(lvl){
-  const p=Math.min(100,Math.max(0,lvl)); waterFill.style.height=p+'%'; waterPercent.textContent=Math.round(p)+'%';
+  const p=Math.min(100,Math.max(0,lvl));
+  waterFill.style.height=p+'%'; waterPercent.textContent=Math.round(p)+'%';
   const low=parseInt(document.getElementById('slLow').value)||30, high=parseInt(document.getElementById('slHigh').value)||80;
   if(p<=low){ waterAlert.textContent='⚠️ LOW WATER - Pump ON'; waterAlert.style.color='#ef4444'; }
   else if(p>=high){ waterAlert.textContent='✅ HIGH WATER - Pump OFF'; waterAlert.style.color='#10b981'; }
@@ -396,7 +588,7 @@ function updateLampUI(num,state){ const icon=document.getElementById('lampIcon'+
 function showCalibMsg(msg,ok=true){ calibMsg.textContent=msg; calibMsg.style.color=ok?'#10b981':'#ef4444'; setTimeout(()=>{ calibMsg.textContent=''; },3000); }
 
 // ============================================================
-// WATERING UI (FIXED: cegah nilai >100)
+// WATERING UI
 // ============================================================
 function updateWateringUI(status, mode, soil, threshold) {
   if(status === 'ON') {
@@ -407,20 +599,69 @@ function updateWateringUI(status, mode, soil, threshold) {
     wateringStatusBadge.className = 'watering-status-badge off';
   }
   wateringModeBadge.textContent = mode === 'AUTO' ? '🤖 AUTO' : '👆 MANUAL';
-  
-  // Pastikan nilai kelembaban tidak > 100 (filter raw ADC)
   if(soil !== undefined) {
     let val = soil;
-    if(val > 100) val = '--'; // filter nilai tidak valid
+    if(val > 100) val = '--';
     wateringSoilDisplay.textContent = val;
   }
   if(threshold !== undefined) wateringThresholdDisplay.textContent = threshold;
 }
-
 function showWateringMsg(msg, ok=true) {
   wateringMsg.textContent = msg;
   wateringMsg.style.color = ok ? '#10b981' : '#ef4444';
   setTimeout(() => { wateringMsg.textContent = ''; }, 3000);
+}
+
+// ============================================================
+// PZEM STATUS INDICATORS
+// ============================================================
+function updatePZEMStatus(voltage, current, power, pf) {
+  // Voltage status
+  if(voltage === undefined || voltage === 0) {
+    voltageStatusDot.className = 'pzem-status-indicator gray';
+    voltageStatusText.textContent = 'Tidak ada data';
+    return;
+  }
+  let vStatus = '';
+  if(voltage < 190) { vStatus = '⚠️ Low Voltage'; voltageStatusDot.className = 'pzem-status-indicator yellow'; voltageStatusText.textContent = vStatus; }
+  else if(voltage > 250) { vStatus = '🔴 High Voltage'; voltageStatusDot.className = 'pzem-status-indicator red'; voltageStatusText.textContent = vStatus; }
+  else { vStatus = '✅ Normal'; voltageStatusDot.className = 'pzem-status-indicator green'; voltageStatusText.textContent = vStatus; }
+
+  // Current status (threshold > 5A)
+  if(current !== undefined && current > 5.0) {
+    currentStatusDot.className = 'pzem-status-indicator red';
+    currentStatusText.textContent = '🔴 Overcurrent (>5A)';
+  } else if(current !== undefined && current > 3.0) {
+    currentStatusDot.className = 'pzem-status-indicator yellow';
+    currentStatusText.textContent = '⚠️ High Current';
+  } else {
+    currentStatusDot.className = 'pzem-status-indicator green';
+    currentStatusText.textContent = '✅ Normal';
+  }
+
+  // Power status (jika power > 1000W)
+  if(power !== undefined && power > 1000) {
+    powerStatusDot.className = 'pzem-status-indicator red';
+    powerStatusText.textContent = '🔴 High Power (>1kW)';
+  } else if(power !== undefined && power > 500) {
+    powerStatusDot.className = 'pzem-status-indicator yellow';
+    powerStatusText.textContent = '⚠️ Moderate Power';
+  } else {
+    powerStatusDot.className = 'pzem-status-indicator green';
+    powerStatusText.textContent = '✅ Normal';
+  }
+
+  // PF status
+  if(pf !== undefined && pf < 0.85) {
+    pfStatusDot.className = 'pzem-status-indicator yellow';
+    pfStatusText.textContent = '⚠️ PF < 0.85';
+  } else if(pf !== undefined && pf < 0.5) {
+    pfStatusDot.className = 'pzem-status-indicator red';
+    pfStatusText.textContent = '🔴 PF < 0.5';
+  } else {
+    pfStatusDot.className = 'pzem-status-indicator green';
+    pfStatusText.textContent = '✅ PF ≥ 0.85';
+  }
 }
 
 // ============================================================
@@ -432,6 +673,7 @@ function pumpControl(cmd){ if(client&&connected) client.publish(TOPICS.pumpContr
 function resetEnergy(){ if(client&&connected&&confirm('Reset energi PZEM ke 0?')) client.publish(TOPICS.powerReset,'RESET'); }
 function addCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidAdd,u); document.getElementById('cardUid').value=''; alert('✅ Kartu '+u+' ditambahkan'); } }
 function delCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidDel,u); document.getElementById('cardUid').value=''; alert('🗑️ Kartu '+u+' dihapus'); } }
+function requestStatus(){ if(client&&connected) client.publish(TOPICS.statusReq || 'esp32/request/status','GET'); }
 
 // ============================================================
 // WATERING FUNCTIONS
@@ -441,11 +683,10 @@ function wateringCmd(cmd) {
   client.publish(TOPICS.wateringCmd, cmd);
   showWateringMsg('📤 Perintah ' + cmd + ' dikirim', true);
 }
-
 function sendWateringConfig() {
   if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
   const threshold = parseInt(document.getElementById('waterThreshold').value);
-  const duration = parseInt(document.getElementById('waterDuration').value) * 1000; // detik ke ms
+  const duration = parseInt(document.getElementById('waterDuration').value) * 1000;
   const interval = parseInt(document.getElementById('waterInterval').value) * 1000;
   if(threshold < 0 || threshold > 100){ alert('Threshold 0-100%'); return; }
   if(duration < 1000){ alert('Durasi minimal 1 detik'); return; }
@@ -487,15 +728,10 @@ function processSensorData(data){
   if(data.hum!==undefined) sHum.innerHTML=data.hum.toFixed(0)+'<span class="sensor-unit">%</span>';
   if(data.soil!==undefined) {
     sSoil.innerHTML=data.soil+'<span class="sensor-unit">%</span>';
-    // Update watering soil display (pastikan tidak >100)
-    let val = data.soil;
-    if(val > 100) val = '--';
-    wateringSoilDisplay.textContent = val;
+    wateringSoilDisplay.textContent = data.soil;
   }
   if(data.water_level!==undefined){ sWater.innerHTML=data.water_level.toFixed(1)+'<span class="sensor-unit">%</span>'; updateWaterUI(data.water_level); }
   if(data.pump_status) updatePumpUI(data.pump_status,data.pump_mode||'AUTO');
-
-  // ====== WATERING STATUS FROM SENSOR ======
   if(data.watering_status !== undefined) {
     updateWateringUI(data.watering_status, data.watering_mode || 'AUTO', data.soil, data.soil_threshold);
     if(data.soil_threshold !== undefined) {
@@ -503,18 +739,38 @@ function processSensorData(data){
       document.getElementById('waterThreshold').value = data.soil_threshold;
     }
   }
-
-  addDataPoint(Date.now(), data.temp||0, data.hum||0, data.soil||0, data.water_level||0, data.pzem_power||0);
+  // Simpan data grafik (power, voltage, current dari sensor jika ada)
+  const p = data.pzem_power || 0;
+  const v = data.pzem_voltage || 0;
+  const a = data.pzem_current || 0;
+  addDataPoint(Date.now(), data.temp||0, data.hum||0, data.soil||0, data.water_level||0, p, v, a);
 }
 function processPowerData(data){
-  if(data.voltage!==undefined) document.getElementById('pzV').textContent=data.voltage.toFixed(1);
-  if(data.current!==undefined) document.getElementById('pzA').textContent=data.current.toFixed(2);
-  if(data.power!==undefined) document.getElementById('pzW').textContent=data.power.toFixed(1);
-  if(data.energy!==undefined) document.getElementById('pzWh').textContent=data.energy.toFixed(3);
-  if(data.frequency!==undefined) document.getElementById('pzF').textContent=data.frequency.toFixed(1);
-  if(data.power_factor!==undefined) document.getElementById('pzPF').textContent=data.power_factor.toFixed(2);
-  const st=document.getElementById('pzStatus');
-  if(data.voltage&&data.voltage>0) st.innerHTML='🟢 PZEM Connected'; else st.innerHTML='🔴 PZEM Not Detected';
+  if(data.voltage!==undefined) {
+    pzV.textContent = data.voltage.toFixed(2);
+    // Update status indicator
+    updatePZEMStatus(data.voltage, data.current, data.power, data.power_factor);
+  }
+  if(data.current!==undefined) pzA.textContent = data.current.toFixed(3);
+  if(data.power!==undefined) pzW.textContent = data.power.toFixed(2);
+  if(data.apparent_power!==undefined) pzVA.textContent = data.apparent_power.toFixed(2);
+  else if(data.voltage!==undefined && data.current!==undefined) {
+    // Hitung apparent power
+    const va = data.voltage * data.current;
+    pzVA.textContent = va.toFixed(2);
+  }
+  if(data.reactive_power!==undefined) pzVAR.textContent = data.reactive_power.toFixed(2);
+  else if(data.voltage!==undefined && data.current!==undefined && data.power!==undefined) {
+    const va = data.voltage * data.current;
+    const var_ = Math.sqrt(va*va - data.power*data.power);
+    if(!isNaN(var_)) pzVAR.textContent = var_.toFixed(2);
+  }
+  if(data.power_factor!==undefined) pzPF.textContent = data.power_factor.toFixed(3);
+  if(data.energy!==undefined) pzWh.textContent = data.energy.toFixed(3);
+  if(data.frequency!==undefined) pzF.textContent = data.frequency.toFixed(2);
+  // Status PZEM
+  if(data.voltage && data.voltage>0) pzemStatus.innerHTML = '🟢 Online';
+  else pzemStatus.innerHTML = '🔴 Offline';
 }
 function processLampAll(data){ if(data.lamp1) updateLampUI(1,data.lamp1); if(data.lamp2) updateLampUI(2,data.lamp2); if(data.lamp3) updateLampUI(3,data.lamp3); if(data.lamp4) updateLampUI(4,data.lamp4); }
 
@@ -553,7 +809,6 @@ function connectMQTT(){
       else if(topic===TOPICS.pumpStatus){ if(data.status) updatePumpUI(data.status,data.mode||'AUTO'); }
       else if(topic===TOPICS.rfidHistoryList){ if(data.history) setHistoryList(data.history); }
       else if(topic===TOPICS.wateringStatus){
-        // Direct watering status update
         updateWateringUI(data.status, data.mode, data.soil_moisture, data.threshold);
         if(data.threshold !== undefined) {
           wateringThresholdDisplay.textContent = data.threshold;
@@ -594,7 +849,11 @@ function setupFilter(){
 window.onload=function(){
   loadGraphData();
   displayHistory(loadHistory());
-  initCharts(); applyFilter(); setupFilter(); connectMQTT(); updateLabels();
+  initCharts();
+  applyFilter();
+  setupFilter();
+  connectMQTT();
+  updateLabels();
   console.log('🚀 Dashboard loaded.');
 };
 </script>
