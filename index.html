@@ -27,6 +27,7 @@
       --border-watering: rgba(16,185,129,0.15);
       --shadow-header: 0 8px 20px rgba(0,0,0,0.3);
       --filter-bg: rgba(255,255,255,0.04);
+      --bg-formula: rgba(255,255,255,0.03);
     }
 
     /* ===== LIGHT THEME ===== */
@@ -49,6 +50,7 @@
       --border-watering: rgba(16,185,129,0.25);
       --shadow-header: 0 8px 20px rgba(0,0,0,0.08);
       --filter-bg: rgba(0,0,0,0.04);
+      --bg-formula: rgba(0,0,0,0.03);
     }
 
     /* ===== RESET & BASE ===== */
@@ -133,7 +135,6 @@
     .power-unit { font-size:0.8rem; color:var(--text-muted); margin-left:4px; }
     .power-label { font-size:0.7rem; color:var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.04em; }
 
-    /* Power Details Grid */
     .power-details-grid {
       display:grid;
       grid-template-columns: repeat(4, 1fr);
@@ -157,6 +158,45 @@
     .power-detail-item .label {
       font-size:0.65rem;
       color:var(--text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+    }
+
+    /* ===== FORMULA NOTE ===== */
+    .formula-note {
+      margin-top:16px;
+      padding:14px 16px;
+      background:var(--bg-formula);
+      border-radius:12px;
+      border:1px solid var(--border-card);
+      font-size:0.85rem;
+      color:var(--text-secondary);
+      line-height:1.7;
+    }
+    .formula-note strong {
+      color:var(--text-primary);
+    }
+    .formula-note .math {
+      font-family: 'Courier New', monospace;
+      background:var(--bg-input);
+      padding:0 6px;
+      border-radius:4px;
+      color:var(--text-primary);
+    }
+    .formula-note .row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px 24px;
+    }
+    .formula-note .col {
+      flex:1;
+      min-width:160px;
+    }
+    .formula-note .title {
+      font-weight:600;
+      color:var(--text-secondary);
+      margin-bottom:4px;
+      font-size:0.8rem;
       text-transform:uppercase;
       letter-spacing:0.04em;
     }
@@ -362,23 +402,23 @@
       <div class="indicator-item"><span>📊 Power Factor</span><span id="indPF"><span class="indicator-dot green"></span> Normal</span></div>
     </div>
 
-    <!-- ===== POWER DETAILS (RUMUS) ===== -->
+    <!-- ===== POWER DETAILS ===== -->
     <div class="power-details-grid">
       <div class="power-detail-item">
         <div class="value" id="pzApparent">-- <span class="power-unit">VA</span></div>
-        <div class="label">Apparent Power</div>
+        <div class="label">Apparent Power (S)</div>
       </div>
       <div class="power-detail-item">
         <div class="value" id="pzReactive">-- <span class="power-unit">VAR</span></div>
-        <div class="label">Reactive Power</div>
+        <div class="label">Reactive Power (Q)</div>
       </div>
       <div class="power-detail-item">
         <div class="value" id="pzCosPhi">-- <span class="power-unit">PF</span></div>
-        <div class="label">Cos Phi</div>
+        <div class="label">Cos Phi (PF)</div>
       </div>
       <div class="power-detail-item">
         <div class="value" id="pzEff">-- <span class="power-unit">%</span></div>
-        <div class="label">Effisiensi (PF*100)</div>
+        <div class="label">Efficiency (PF×100)</div>
       </div>
       <div class="power-detail-item">
         <div class="value" id="pzFreq">-- <span class="power-unit">Hz</span></div>
@@ -394,7 +434,40 @@
       </div>
       <div class="power-detail-item">
         <div class="value" id="pzPowerDetail">-- <span class="power-unit">W</span></div>
-        <div class="label">AC Power</div>
+        <div class="label">AC Power (P)</div>
+      </div>
+    </div>
+
+    <!-- ===== FORMULA NOTE ===== -->
+    <div class="formula-note">
+      <div class="title">📐 Catatan Rumus Daya Listrik AC</div>
+      <div class="row">
+        <div class="col">
+          <strong>Daya Semu (S)</strong><br>
+          <span class="math">S = V × I</span> &nbsp;(VA)
+        </div>
+        <div class="col">
+          <strong>Daya Aktif (P)</strong><br>
+          <span class="math">P = V × I × cos φ</span> &nbsp;(W)
+        </div>
+        <div class="col">
+          <strong>Daya Reaktif (Q)</strong><br>
+          <span class="math">Q = V × I × sin φ</span> &nbsp;(VAR)
+        </div>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <div class="col">
+          <strong>Hubungan Segitiga Daya</strong><br>
+          <span class="math">S² = P² + Q²</span>
+        </div>
+        <div class="col">
+          <strong>Power Factor</strong><br>
+          <span class="math">PF = cos φ = P / S</span>
+        </div>
+        <div class="col">
+          <strong>Efisiensi</strong><br>
+          <span class="math">η = PF × 100%</span>
+        </div>
       </div>
     </div>
 
