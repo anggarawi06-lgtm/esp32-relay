@@ -81,9 +81,9 @@
     .history-item .time { color:#94a3b8; font-size:0.75rem; }
     .cal-group { margin-bottom:14px; }
     .cal-group label { display:block; font-weight:500; font-size:0.8rem; color:#94a3b8; margin-bottom:4px; }
-    .cal-group input[type="number"] { width:100%; padding:8px 14px; border:1px solid #334155; border-radius:10px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; }
-    .cal-group input[type="number"]:focus { border-color:#3b82f6; }
-    .cal-group input[type="range"] { width:100%; height:4px; -webkit-appearance:none; background:#334155; border-radius:4px; outline:none; }
+    .cal-group input { width:100%; padding:8px 14px; border:1px solid #334155; border-radius:10px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; }
+    .cal-group input:focus { border-color:#3b82f6; }
+    .cal-group input[type="range"] { width:100%; height:4px; -webkit-appearance:none; background:#334155; border-radius:4px; outline:none; padding:0; }
     .cal-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#3b82f6; cursor:pointer; box-shadow:0 0 12px rgba(59,130,246,0.3); }
     .range-labels { display:flex; justify-content:space-between; font-size:0.7rem; color:#64748b; margin-top:2px; }
     .cal-msg { text-align:center; font-size:0.85rem; margin-top:10px; min-height:24px; }
@@ -92,10 +92,11 @@
     .chart-container { height:220px; width:100%; margin-top:8px; }
     .chart-container.power-chart { height:200px; }
     .footer { text-align:center; margin-top:32px; color:#475569; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:20px; }
-    .cam-status { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); padding:12px 18px; border-radius:14px; flex-wrap:wrap; }
-    .cam-dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
-    .cam-dot.on { background:#10b981; box-shadow:0 0 12px rgba(16,185,129,0.4); }
-    .cam-dot.off { background:#ef4444; box-shadow:0 0 12px rgba(239,68,68,0.4); }
+    .watering-card { background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); }
+    .watering-status-badge { font-size:1.1rem; padding:4px 16px; border-radius:30px; font-weight:600; }
+    .watering-status-badge.on { background:#10b981; color:#fff; }
+    .watering-status-badge.off { background:#ef4444; color:#fff; }
+    .watering-mode-badge { font-size:0.8rem; padding:2px 12px; border-radius:30px; background:#8b5cf6; color:#fff; }
     .input-group { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .input-field { flex:2; padding:10px 16px; border:1px solid #334155; border-radius:30px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; min-width:140px; }
     .input-field:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
@@ -108,7 +109,7 @@
 <div class="container">
 
   <header class="header">
-    <div class="header-left"><h1>⚡<span>Smart</span>IoT</h1><span class="badge-esp">ESP32</span></div>
+    <div class="header-left"><h1>⚡<span>Smart</span>IoT</h1><span class="badge-esp">ESP32 v3.0</span></div>
     <div class="conn-status" id="connStatus"><span class="dot"></span> Menghubungkan...</div>
   </header>
 
@@ -135,14 +136,14 @@
       <div class="sensor-grid">
         <div class="sensor-item"><div class="sensor-value" id="sTemp">--<span class="sensor-unit">°C</span></div><div class="sensor-label">Temperature</div></div>
         <div class="sensor-item"><div class="sensor-value" id="sHum">--<span class="sensor-unit">%</span></div><div class="sensor-label">Humidity</div></div>
-        <div class="sensor-item"><div class="sensor-value" id="sSoil">--<span class="sensor-unit">%</span></div><div class="sensor-label">Soil</div></div>
+        <div class="sensor-item"><div class="sensor-value" id="sSoil">--<span class="sensor-unit">%</span></div><div class="sensor-label">Soil Moisture</div></div>
         <div class="sensor-item"><div class="sensor-value" id="sWater">--<span class="sensor-unit">%</span></div><div class="sensor-label">Water Level</div></div>
       </div>
     </div>
     <div class="card"><div class="card-title"><span class="icon">🚪</span> Kontrol</div>
       <button class="btn btn-primary" onclick="openDoorManual()" style="width:100%; padding:14px; margin-bottom:16px;">🔓 BUKA PINTU</button>
       <div class="pump-control">
-        <div style="display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap;"><span>💧 PUMP</span><span class="pump-badge off" id="pumpStatusBadge">OFF</span><span class="pump-badge auto" id="pumpModeBadge">AUTO</span></div>
+        <div style="display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap;"><span>💧 PUMP UTAMA</span><span class="pump-badge off" id="pumpStatusBadge">OFF</span><span class="pump-badge auto" id="pumpModeBadge">AUTO</span></div>
         <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
           <button class="btn btn-on" style="flex:1;" onclick="pumpControl('ON')">ON</button>
           <button class="btn btn-off" style="flex:1;" onclick="pumpControl('OFF')">OFF</button>
@@ -201,6 +202,45 @@
     </div>
   </div>
 
+  <!-- ==================== PENYIRAMAN TANAMAN ==================== -->
+  <div class="card watering-card" style="margin-bottom:24px;">
+    <div class="card-title"><span class="icon">🌱</span> Penyiraman Tanaman Otomatis</div>
+    <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span>Status:</span>
+        <span class="watering-status-badge off" id="wateringStatusBadge">OFF</span>
+        <span>Mode:</span>
+        <span class="watering-mode-badge" id="wateringModeBadge">AUTO</span>
+        <span style="margin-left:8px;">🌱 Kelembaban: <strong id="wateringSoilDisplay">--</strong>%</span>
+        <span>| Threshold: <strong id="wateringThresholdDisplay">40</strong>%</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+      <button class="btn btn-on" onclick="wateringCmd('ON')">🔛 ON</button>
+      <button class="btn btn-off" onclick="wateringCmd('OFF')">🔴 OFF</button>
+      <button class="btn" style="background:#8b5cf6; color:#fff;" onclick="wateringCmd('AUTO')">🤖 AUTO</button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+      <div class="cal-group">
+        <label>Threshold Kelembaban (%)</label>
+        <input type="number" id="waterThreshold" step="1" value="40">
+        <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Siram jika soil ≤ nilai ini</div>
+      </div>
+      <div class="cal-group">
+        <label>Durasi Penyiraman (detik)</label>
+        <input type="number" id="waterDuration" step="1" value="5">
+        <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Lama pompa menyala</div>
+      </div>
+      <div class="cal-group">
+        <label>Interval Minimal (detik)</label>
+        <input type="number" id="waterInterval" step="1" value="60">
+        <div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Tunggu antar penyiraman</div>
+      </div>
+    </div>
+    <button class="btn btn-water" onclick="sendWateringConfig()" style="margin-top:12px;">💾 Simpan Konfigurasi Penyiraman</button>
+    <div id="wateringMsg" style="text-align:center; font-size:0.85rem; margin-top:8px; min-height:20px;"></div>
+  </div>
+
   <!-- CHARTS -->
   <div class="grid-2" style="margin-bottom:24px;">
     <div class="card"><div class="card-title"><span class="icon">📈</span> Temperature & Humidity</div><div class="chart-container"><canvas id="chartTempHum"></canvas></div></div>
@@ -227,7 +267,7 @@
     <div class="history-box" id="historyBox"><div style="text-align:center; color:#64748b; padding:20px;">Belum ada history</div></div>
   </div>
 
-  <footer class="footer">© 2025 Smart IoT Dashboard Pro</footer>
+  <footer class="footer">© 2025 Smart IoT Dashboard Pro · ESP32 + MQTT</footer>
 </div>
 
 <script>
@@ -240,14 +280,25 @@ const MQTT_CFG = {
   password: '?d6OcSIy38T@0;ojDV,u'
 };
 const TOPICS = {
-  sensor:'esp32/sensor', power:'esp32/power', calib:'esp32/water/calibration',
-  calibSet:'esp32/water/calibration/set', calibGet:'esp32/water/calibration/get',
-  lampAll:'esp32/lamp/all', pumpStatus:'esp32/pump/status',
-  rfidScan:'esp32/rfid/scan', rfidStatus:'esp32/rfid/status',
-  rfidHistory:'esp32/rfid/history', rfidHistoryList:'esp32/rfid/history_list',
-  doorControl:'esp32/doorlock', pumpControl:'esp32/pump/manual',
-  rfidAdd:'esp32/rfid/add', rfidDel:'esp32/rfid/delete',
-  powerReset:'esp32/power/reset/cmd'
+  sensor:'esp32/sensor',
+  power:'esp32/power',
+  calib:'esp32/water/calibration',
+  calibSet:'esp32/water/calibration/set',
+  calibGet:'esp32/water/calibration/get',
+  lampAll:'esp32/lamp/all',
+  pumpStatus:'esp32/pump/status',
+  rfidScan:'esp32/rfid/scan',
+  rfidStatus:'esp32/rfid/status',
+  rfidHistory:'esp32/rfid/history',
+  rfidHistoryList:'esp32/rfid/history_list',
+  doorControl:'esp32/doorlock',
+  pumpControl:'esp32/pump/manual',
+  rfidAdd:'esp32/rfid/add',
+  rfidDel:'esp32/rfid/delete',
+  powerReset:'esp32/power/reset/cmd',
+  wateringCmd:'esp32/watering/cmd',
+  wateringConfig:'esp32/watering/config',
+  wateringStatus:'esp32/watering/status'
 };
 const HISTORY_STORAGE_KEY = 'rfid_history';
 let client = null, connected = false, currentFilterHours = 24;
@@ -275,6 +326,13 @@ const rfidUid = document.getElementById('rfidUid');
 const rfidStatus = document.getElementById('rfidStatus');
 const historyBox = document.getElementById('historyBox');
 const dataCount = document.getElementById('dataCount');
+
+// Watering UI refs
+const wateringStatusBadge = document.getElementById('wateringStatusBadge');
+const wateringModeBadge = document.getElementById('wateringModeBadge');
+const wateringSoilDisplay = document.getElementById('wateringSoilDisplay');
+const wateringThresholdDisplay = document.getElementById('wateringThresholdDisplay');
+const wateringMsg = document.getElementById('wateringMsg');
 
 // ============================================================
 // HISTORY
@@ -338,6 +396,28 @@ function updateLampUI(num,state){ const icon=document.getElementById('lampIcon'+
 function showCalibMsg(msg,ok=true){ calibMsg.textContent=msg; calibMsg.style.color=ok?'#10b981':'#ef4444'; setTimeout(()=>{ calibMsg.textContent=''; },3000); }
 
 // ============================================================
+// WATERING UI
+// ============================================================
+function updateWateringUI(status, mode, soil, threshold) {
+  if(status === 'ON') {
+    wateringStatusBadge.textContent = '🟢 ON';
+    wateringStatusBadge.className = 'watering-status-badge on';
+  } else {
+    wateringStatusBadge.textContent = '🔴 OFF';
+    wateringStatusBadge.className = 'watering-status-badge off';
+  }
+  wateringModeBadge.textContent = mode === 'AUTO' ? '🤖 AUTO' : '👆 MANUAL';
+  if(soil !== undefined) wateringSoilDisplay.textContent = soil;
+  if(threshold !== undefined) wateringThresholdDisplay.textContent = threshold;
+}
+
+function showWateringMsg(msg, ok=true) {
+  wateringMsg.textContent = msg;
+  wateringMsg.style.color = ok ? '#10b981' : '#ef4444';
+  setTimeout(() => { wateringMsg.textContent = ''; }, 3000);
+}
+
+// ============================================================
 // MQTT PUBLISH
 // ============================================================
 function controlLamp(num,state){ if(client&&connected) client.publish('esp32/lamp'+num,state); }
@@ -348,54 +428,49 @@ function addCard(){ const u=document.getElementById('cardUid').value.trim().toUp
 function delCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidDel,u); document.getElementById('cardUid').value=''; alert('🗑️ Kartu '+u+' dihapus'); } }
 
 // ============================================================
-// CALIBRATION (FIXED)
+// WATERING FUNCTIONS
+// ============================================================
+function wateringCmd(cmd) {
+  if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
+  client.publish(TOPICS.wateringCmd, cmd);
+  showWateringMsg('📤 Perintah ' + cmd + ' dikirim', true);
+}
+
+function sendWateringConfig() {
+  if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
+  const threshold = parseInt(document.getElementById('waterThreshold').value);
+  const duration = parseInt(document.getElementById('waterDuration').value) * 1000; // detik ke ms
+  const interval = parseInt(document.getElementById('waterInterval').value) * 1000;
+  if(threshold < 0 || threshold > 100){ alert('Threshold 0-100%'); return; }
+  if(duration < 1000){ alert('Durasi minimal 1 detik'); return; }
+  if(interval < 1000){ alert('Interval minimal 1 detik'); return; }
+  const cfg = { threshold, duration, interval };
+  client.publish(TOPICS.wateringConfig, JSON.stringify(cfg));
+  showWateringMsg('✅ Konfigurasi penyiraman dikirim', true);
+}
+
+// ============================================================
+// CALIBRATION
 // ============================================================
 function sendCalibration(){
   if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
-  
-  const cfg = {
-    minAnalog: parseFloat(document.getElementById('inMinAnalog').value),
-    maxAnalog: parseFloat(document.getElementById('inMaxAnalog').value),
-    minDevice: parseFloat(document.getElementById('inMinDev').value),
-    maxDevice: parseFloat(document.getElementById('inMaxDev').value),
-    waterLow: parseInt(document.getElementById('slLow').value),
-    waterHigh: parseInt(document.getElementById('slHigh').value),
-    hysteresis: parseFloat(document.getElementById('inHyst').value)
-  };
-  
-  // Validasi
-  if(cfg.minAnalog >= cfg.maxAnalog){ alert('Min Distance < Max Distance'); return; }
-  if(cfg.waterLow >= cfg.waterHigh){ alert('LOW < HIGH'); return; }
-  
-  client.publish(TOPICS.calibSet, JSON.stringify(cfg));
-  showCalibMsg('✅ Kalibrasi dikirim ke ESP32', true);
+  const cfg={ minAnalog:parseFloat(document.getElementById('inMinAnalog').value), maxAnalog:parseFloat(document.getElementById('inMaxAnalog').value), minDevice:parseFloat(document.getElementById('inMinDev').value), maxDevice:parseFloat(document.getElementById('inMaxDev').value), waterLow:parseInt(document.getElementById('slLow').value), waterHigh:parseInt(document.getElementById('slHigh').value), hysteresis:parseFloat(document.getElementById('inHyst').value) };
+  if(cfg.minAnalog>=cfg.maxAnalog){ alert('Min Distance < Max Distance'); return; }
+  if(cfg.waterLow>=cfg.waterHigh){ alert('LOW < HIGH'); return; }
+  client.publish(TOPICS.calibSet,JSON.stringify(cfg)); showCalibMsg('✅ Kalibrasi dikirim ke ESP32',true);
 }
-
-function getCalibration(){
-  if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
-  client.publish(TOPICS.calibGet, '');
-  showCalibMsg('📡 Meminta kalibrasi...', true);
-}
-
+function getCalibration(){ if(!client||!connected){ alert('MQTT tidak terhubung!'); return; } client.publish(TOPICS.calibGet,''); showCalibMsg('📡 Meminta kalibrasi...',true); }
 function applyCalibFromESP32(data){
-  console.log('📥 Applying calibration from ESP32:', data);
-  
-  if(data.minAnalog !== undefined) document.getElementById('inMinAnalog').value = data.minAnalog;
-  if(data.maxAnalog !== undefined) document.getElementById('inMaxAnalog').value = data.maxAnalog;
-  if(data.minDevice !== undefined) document.getElementById('inMinDev').value = data.minDevice;
-  if(data.maxDevice !== undefined) document.getElementById('inMaxDev').value = data.maxDevice;
-  if(data.waterLow !== undefined) document.getElementById('slLow').value = data.waterLow;
-  if(data.waterHigh !== undefined) document.getElementById('slHigh').value = data.waterHigh;
-  if(data.hysteresis !== undefined) document.getElementById('inHyst').value = data.hysteresis;
-  
+  if(data.minAnalog!==undefined) document.getElementById('inMinAnalog').value=data.minAnalog;
+  if(data.maxAnalog!==undefined) document.getElementById('inMaxAnalog').value=data.maxAnalog;
+  if(data.minDevice!==undefined) document.getElementById('inMinDev').value=data.minDevice;
+  if(data.maxDevice!==undefined) document.getElementById('inMaxDev').value=data.maxDevice;
+  if(data.waterLow!==undefined) document.getElementById('slLow').value=data.waterLow;
+  if(data.waterHigh!==undefined) document.getElementById('slHigh').value=data.waterHigh;
+  if(data.hysteresis!==undefined) document.getElementById('inHyst').value=data.hysteresis;
   updateLabels();
-  if(data.currentWater !== undefined) updateWaterUI(data.currentWater);
-  
-  // Update display thresholds
-  if(data.waterLow !== undefined) dispLow.textContent = data.waterLow;
-  if(data.waterHigh !== undefined) dispHigh.textContent = data.waterHigh;
-  
-  showCalibMsg('✅ Kalibrasi dari ESP32 diterima', true);
+  if(data.currentWater!==undefined) updateWaterUI(data.currentWater);
+  showCalibMsg('✅ Kalibrasi dari ESP32 diterima',true);
 }
 
 // ============================================================
@@ -404,13 +479,23 @@ function applyCalibFromESP32(data){
 function processSensorData(data){
   if(data.temp!==undefined) sTemp.innerHTML=data.temp.toFixed(1)+'<span class="sensor-unit">°C</span>';
   if(data.hum!==undefined) sHum.innerHTML=data.hum.toFixed(0)+'<span class="sensor-unit">%</span>';
-  if(data.soil!==undefined) sSoil.innerHTML=data.soil+'<span class="sensor-unit">%</span>';
+  if(data.soil!==undefined) {
+    sSoil.innerHTML=data.soil+'<span class="sensor-unit">%</span>';
+    // Update watering soil display
+    wateringSoilDisplay.textContent = data.soil;
+  }
   if(data.water_level!==undefined){ sWater.innerHTML=data.water_level.toFixed(1)+'<span class="sensor-unit">%</span>'; updateWaterUI(data.water_level); }
   if(data.pump_status) updatePumpUI(data.pump_status,data.pump_mode||'AUTO');
-  
-  // JANGAN UPDATE FORM DARI SENSOR DATA! (agar tidak menimpa kalibrasi)
-  // if(data.waterLow!==undefined){ ... }  <- HAPUS atau komen
-  
+
+  // ====== WATERING STATUS FROM SENSOR ======
+  if(data.watering_status !== undefined) {
+    updateWateringUI(data.watering_status, data.watering_mode || 'AUTO', data.soil, data.soil_threshold);
+    if(data.soil_threshold !== undefined) {
+      wateringThresholdDisplay.textContent = data.soil_threshold;
+      document.getElementById('waterThreshold').value = data.soil_threshold;
+    }
+  }
+
   addDataPoint(Date.now(), data.temp||0, data.hum||0, data.soil||0, data.water_level||0, data.pzem_power||0);
 }
 function processPowerData(data){
@@ -434,10 +519,17 @@ function connectMQTT(){
   client=mqtt.connect(MQTT_CFG.server,opts);
   client.on('connect',()=>{
     connected=true; connStatus.className='conn-status online'; connStatus.innerHTML='<span class="dot"></span> Online';
-    client.subscribe(TOPICS.sensor); client.subscribe(TOPICS.power); client.subscribe(TOPICS.calib);
-    client.subscribe(TOPICS.lampAll); client.subscribe(TOPICS.pumpStatus);
-    client.subscribe(TOPICS.rfidScan); client.subscribe(TOPICS.rfidStatus);
-    client.subscribe(TOPICS.rfidHistory); client.subscribe(TOPICS.rfidHistoryList);
+    client.subscribe(TOPICS.sensor);
+    client.subscribe(TOPICS.power);
+    client.subscribe(TOPICS.calib);
+    client.subscribe(TOPICS.lampAll);
+    client.subscribe(TOPICS.pumpStatus);
+    client.subscribe(TOPICS.rfidScan);
+    client.subscribe(TOPICS.rfidStatus);
+    client.subscribe(TOPICS.rfidHistory);
+    client.subscribe(TOPICS.rfidHistoryList);
+    client.subscribe(TOPICS.wateringStatus);
+    console.log('✅ MQTT connected');
     setTimeout(getCalibration,2000);
   });
   client.on('close',()=>{ connected=false; connStatus.className='conn-status offline'; connStatus.innerHTML='<span class="dot"></span> Offline'; });
@@ -452,6 +544,20 @@ function connectMQTT(){
       else if(topic===TOPICS.lampAll) processLampAll(data);
       else if(topic===TOPICS.pumpStatus){ if(data.status) updatePumpUI(data.status,data.mode||'AUTO'); }
       else if(topic===TOPICS.rfidHistoryList){ if(data.history) setHistoryList(data.history); }
+      else if(topic===TOPICS.wateringStatus){
+        // Direct watering status update
+        updateWateringUI(data.status, data.mode, data.soil_moisture, data.threshold);
+        if(data.threshold !== undefined) {
+          wateringThresholdDisplay.textContent = data.threshold;
+          document.getElementById('waterThreshold').value = data.threshold;
+        }
+        if(data.duration_ms !== undefined) {
+          document.getElementById('waterDuration').value = data.duration_ms / 1000;
+        }
+        if(data.interval_ms !== undefined) {
+          document.getElementById('waterInterval').value = data.interval_ms / 1000;
+        }
+      }
     }catch(e){
       if(topic===TOPICS.rfidScan) rfidUid.textContent=m;
       else if(topic===TOPICS.rfidStatus) rfidStatus.textContent=m;
