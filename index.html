@@ -33,7 +33,6 @@
       --modal-border: #334155;
     }
 
-    /* ===== LIGHT THEME ===== */
     [data-theme="light"] {
       --bg-body: #f1f5f9;
       --bg-card: rgba(255,255,255,0.85);
@@ -59,12 +58,10 @@
       --modal-border: #d1d5db;
     }
 
-    /* ===== RESET & BASE ===== */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
     body { background:var(--bg-body); color:var(--text-primary); padding:20px; min-height:100vh; transition:background 0.3s, color 0.3s; }
     .container { max-width:1440px; margin:0 auto; }
 
-    /* ===== HEADER ===== */
     .header {
       display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
       background:var(--bg-card); backdrop-filter:blur(12px); padding:16px 24px; border-radius:24px;
@@ -90,24 +87,21 @@
     .theme-toggle:hover { border-color:#38bdf8; }
     .theme-toggle .icon { font-size:1.1rem; }
 
-    /* ===== FILTER BAR ===== */
     .filter-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--filter-bg); padding:12px 20px; border-radius:18px; border:1px solid var(--border-card); margin-bottom:24px; transition:background 0.3s; }
     .filter-btn { padding:6px 16px; border:none; border-radius:30px; background:var(--bg-input); color:var(--text-muted); font-weight:500; font-size:0.8rem; cursor:pointer; transition:0.2s; border:1px solid transparent; }
     .filter-btn:hover { background:var(--bg-card-hover); color:var(--text-primary); }
     .filter-btn.active { background:#2563eb; color:#fff; border-color:#3b82f6; box-shadow:0 0 20px rgba(37,99,235,0.2); }
     .filter-right { flex:1; text-align:right; font-size:0.8rem; color:var(--text-muted); }
 
-    /* ===== GRID ===== */
     .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:24px; }
     .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:24px; }
 
-    /* ===== CARDS ===== */
     .card { background:var(--bg-card); backdrop-filter:blur(8px); border-radius:20px; padding:20px; border:1px solid var(--border-card); transition:background 0.3s, border 0.3s, transform 0.2s; }
     .card:hover { border-color:var(--border-card); background:var(--bg-card-hover); }
     .card-title { font-weight:600; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-secondary); margin-bottom:14px; display:flex; align-items:center; gap:10px; justify-content:space-between; }
     .card-title .icon { font-size:1.2rem; }
 
-    /* ===== LAMP CARD ===== */
     .lamp-card { background:var(--bg-card); border-radius:18px; padding:16px; text-align:center; border:1px solid var(--border-card); transition:background 0.3s, border 0.3s; }
     .lamp-icon { font-size:2.4rem; transition:0.2s; }
     .lamp-icon.on { color:#fbbf24; filter:drop-shadow(0 0 12px rgba(251,191,36,0.3)); }
@@ -117,7 +111,6 @@
     .lamp-status.on { background:#10b981; color:#fff; }
     .lamp-status.off { background:#ef4444; color:#fff; }
 
-    /* ===== BUTTONS ===== */
     .btn-group { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
     .btn { padding:6px 16px; border:none; border-radius:30px; font-weight:600; font-size:0.75rem; cursor:pointer; transition:0.2s; text-transform:uppercase; letter-spacing:0.04em; }
     .btn-on { background:#10b981; color:#fff; }
@@ -125,15 +118,15 @@
     .btn-primary { background:#2563eb; color:#fff; }
     .btn-water { background:#0e7490; color:#fff; }
     .btn-sm { padding:4px 12px; font-size:0.7rem; }
+    .btn-option { background:var(--bg-input); color:var(--text-secondary); border:1px solid var(--border-input); }
+    .btn-option.active { background:#2563eb; color:#fff; border-color:#3b82f6; }
 
-    /* ===== SENSOR ===== */
     .sensor-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
     .sensor-item { background:var(--bg-card); border-radius:12px; padding:12px; text-align:center; border:1px solid var(--border-card); transition:background 0.3s; }
     .sensor-value { font-size:2rem; font-weight:700; color:var(--text-primary); }
     .sensor-unit { font-size:0.8rem; color:var(--text-muted); margin-left:2px; }
     .sensor-label { font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
 
-    /* ===== POWER MONITOR ===== */
     .power-monitor-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px; }
     .power-item { background:var(--bg-card); border-radius:14px; padding:16px; text-align:center; border:1px solid var(--border-card); transition:background 0.3s; }
     .power-value { font-size:1.8rem; font-weight:700; color:var(--text-primary); line-height:1.2; }
@@ -180,7 +173,6 @@
       display:block;
     }
 
-    /* ===== MODAL ===== */
     .modal-overlay {
       display:none;
       position:fixed;
@@ -218,17 +210,8 @@
       transition:0.2s;
     }
     .modal-close:hover { color:var(--text-primary); transform:rotate(90deg); }
-    .modal-title {
-      font-size:1.2rem;
-      font-weight:700;
-      color:var(--text-primary);
-      margin-bottom:6px;
-    }
-    .modal-sub {
-      font-size:0.9rem;
-      color:var(--text-secondary);
-      margin-bottom:16px;
-    }
+    .modal-title { font-size:1.2rem; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
+    .modal-sub { font-size:0.9rem; color:var(--text-secondary); margin-bottom:16px; }
     .modal-formula {
       background:var(--bg-input);
       padding:12px 16px;
@@ -239,11 +222,7 @@
       border:1px solid var(--border-input);
       margin-bottom:12px;
     }
-    .modal-desc {
-      font-size:0.9rem;
-      color:var(--text-secondary);
-      line-height:1.6;
-    }
+    .modal-desc { font-size:0.9rem; color:var(--text-secondary); line-height:1.6; }
     .modal-desc strong { color:var(--text-primary); }
 
     .status-badge { display:inline-block; padding:4px 12px; border-radius:30px; font-size:0.7rem; font-weight:600; margin-top:4px; }
@@ -253,7 +232,6 @@
 
     .indicator-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
     .indicator-item { display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:10px 14px; border-radius:10px; border:1px solid var(--border-card); transition:background 0.3s; color:var(--text-primary); }
-
     .indicator-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px; }
     .indicator-dot.green { background:#10b981; }
     .indicator-dot.yellow { background:#f59e0b; }
@@ -325,13 +303,23 @@
     .input-field:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
     .input-field::placeholder { color:var(--text-muted); }
 
+    /* ===== LAMP TIMER SETTING ===== */
+    .timer-group { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+    .timer-group input { width:70px; padding:6px 10px; border:1px solid var(--border-input); border-radius:20px; background:var(--bg-input); color:var(--text-primary); text-align:center; }
+    .timer-group label { font-size:0.8rem; color:var(--text-muted); }
+
+    .mode-select { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px; }
+    .mode-select .btn { flex:1; min-width:60px; }
+
+    .fan-settings { background:var(--bg-card); border-radius:10px; padding:10px; margin-top:8px; border:1px solid var(--border-card); }
+
     /* ===== FOOTER ===== */
     .footer { text-align:center; margin-top:32px; color:var(--text-muted); font-size:0.8rem; border-top:1px solid var(--border-card); padding-top:20px; transition:color 0.3s, border 0.3s; }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width:1024px) { .grid-4 { grid-template-columns:repeat(2,1fr); } }
     @media (max-width:768px) {
-      .grid-4, .grid-2 { grid-template-columns:1fr; }
+      .grid-4, .grid-2, .grid-3 { grid-template-columns:1fr; }
       .power-monitor-grid { grid-template-columns:1fr 1fr; }
       .power-details-grid { grid-template-columns:1fr 1fr; }
       .sensor-grid { grid-template-columns:1fr 1fr; }
@@ -345,7 +333,6 @@
 <body>
 <div class="container">
 
-  <!-- HEADER -->
   <header class="header">
     <div class="header-left">
       <h1>⚡<span>Smart</span>IoT</h1>
@@ -370,12 +357,124 @@
     <div class="filter-right"><span id="dataCount">0</span> data points</div>
   </div>
 
-  <!-- ========== LAMPU 4 ========== -->
-  <div class="grid-4">
-    <div class="lamp-card"><div class="lamp-icon off" id="lampIcon1">💡</div><div class="lamp-title">LAMPU 1</div><div class="lamp-status off" id="lampStatus1">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(1,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(1,'OFF')">OFF</button></div></div>
-    <div class="lamp-card"><div class="lamp-icon off" id="lampIcon2">💡</div><div class="lamp-title">LAMPU 2</div><div class="lamp-status off" id="lampStatus2">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(2,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(2,'OFF')">OFF</button></div></div>
-    <div class="lamp-card"><div class="lamp-icon off" id="lampIcon3">💡</div><div class="lamp-title">LAMPU 3</div><div class="lamp-status off" id="lampStatus3">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(3,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(3,'OFF')">OFF</button></div></div>
-    <div class="lamp-card"><div class="lamp-icon off" id="lampIcon4">💡</div><div class="lamp-title">LAMPU 4</div><div class="lamp-status off" id="lampStatus4">OFF</div><div class="btn-group"><button class="btn btn-on" onclick="controlLamp(4,'ON')">ON</button><button class="btn btn-off" onclick="controlLamp(4,'OFF')">OFF</button></div></div>
+  <!-- ========== LAMPU 4 (DENGAN FUNGSI BARU) ========== -->
+  <div class="grid-4" id="lampContainer">
+    <!-- Lampu 1 (dengan fungsi Kipas) -->
+    <div class="lamp-card" data-lamp="1">
+      <div class="lamp-icon off" id="lampIcon1">💡</div>
+      <div class="lamp-title" id="lampTitle1">LAMPU 1</div>
+      <div class="lamp-status off" id="lampStatus1">OFF</div>
+      <div class="mode-select" id="modeSelect1">
+        <button class="btn btn-option active" data-mode="manual" onclick="setLampMode(1,'manual')">Manual</button>
+        <button class="btn btn-option" data-mode="timer" onclick="setLampMode(1,'timer')">Timer</button>
+        <button class="btn btn-option" data-mode="fan" onclick="setLampMode(1,'fan')">⚡Kipas</button>
+      </div>
+      <div id="lampControls1">
+        <div class="btn-group">
+          <button class="btn btn-on" onclick="controlLamp(1,'ON')">ON</button>
+          <button class="btn btn-off" onclick="controlLamp(1,'OFF')">OFF</button>
+        </div>
+      </div>
+      <div id="timerControls1" style="display:none; margin-top:8px;">
+        <div class="timer-group">
+          <label>Durasi</label>
+          <input type="number" id="timerMin1" min="0" value="0" style="width:60px;"> menit
+          <input type="number" id="timerSec1" min="0" max="59" value="30" style="width:60px;"> detik
+          <button class="btn btn-primary btn-sm" onclick="setTimer(1)">Set Timer</button>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Timer tersisa: <span id="timerRemain1">0s</span></div>
+      </div>
+      <div id="fanControls1" style="display:none; margin-top:8px;">
+        <div class="btn-group">
+          <button class="btn btn-on" onclick="controlFan(1,'ON')">ON</button>
+          <button class="btn btn-off" onclick="controlFan(1,'OFF')">OFF</button>
+          <button class="btn btn-primary" onclick="controlFan(1,'AUTO')">AUTO</button>
+        </div>
+        <div class="fan-settings" style="margin-top:6px;">
+          <label style="font-size:0.75rem;">Suhu ON jika ≥ <input type="number" id="fanThreshold1" value="30" style="width:60px; background:var(--bg-input); border:1px solid var(--border-input); border-radius:10px; padding:4px 8px; color:var(--text-primary);"> °C</label>
+          <button class="btn btn-primary btn-sm" onclick="setFanThreshold(1)">Set</button>
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Suhu ruangan: <span id="currentTemp1">--</span>°C</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lampu 2 -->
+    <div class="lamp-card" data-lamp="2">
+      <div class="lamp-icon off" id="lampIcon2">💡</div>
+      <div class="lamp-title">LAMPU 2</div>
+      <div class="lamp-status off" id="lampStatus2">OFF</div>
+      <div class="mode-select">
+        <button class="btn btn-option active" data-mode="manual" onclick="setLampMode(2,'manual')">Manual</button>
+        <button class="btn btn-option" data-mode="timer" onclick="setLampMode(2,'timer')">Timer</button>
+      </div>
+      <div id="lampControls2">
+        <div class="btn-group">
+          <button class="btn btn-on" onclick="controlLamp(2,'ON')">ON</button>
+          <button class="btn btn-off" onclick="controlLamp(2,'OFF')">OFF</button>
+        </div>
+      </div>
+      <div id="timerControls2" style="display:none; margin-top:8px;">
+        <div class="timer-group">
+          <label>Durasi</label>
+          <input type="number" id="timerMin2" min="0" value="0" style="width:60px;"> menit
+          <input type="number" id="timerSec2" min="0" max="59" value="30" style="width:60px;"> detik
+          <button class="btn btn-primary btn-sm" onclick="setTimer(2)">Set Timer</button>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Timer tersisa: <span id="timerRemain2">0s</span></div>
+      </div>
+    </div>
+
+    <!-- Lampu 3 -->
+    <div class="lamp-card" data-lamp="3">
+      <div class="lamp-icon off" id="lampIcon3">💡</div>
+      <div class="lamp-title">LAMPU 3</div>
+      <div class="lamp-status off" id="lampStatus3">OFF</div>
+      <div class="mode-select">
+        <button class="btn btn-option active" data-mode="manual" onclick="setLampMode(3,'manual')">Manual</button>
+        <button class="btn btn-option" data-mode="timer" onclick="setLampMode(3,'timer')">Timer</button>
+      </div>
+      <div id="lampControls3">
+        <div class="btn-group">
+          <button class="btn btn-on" onclick="controlLamp(3,'ON')">ON</button>
+          <button class="btn btn-off" onclick="controlLamp(3,'OFF')">OFF</button>
+        </div>
+      </div>
+      <div id="timerControls3" style="display:none; margin-top:8px;">
+        <div class="timer-group">
+          <label>Durasi</label>
+          <input type="number" id="timerMin3" min="0" value="0" style="width:60px;"> menit
+          <input type="number" id="timerSec3" min="0" max="59" value="30" style="width:60px;"> detik
+          <button class="btn btn-primary btn-sm" onclick="setTimer(3)">Set Timer</button>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Timer tersisa: <span id="timerRemain3">0s</span></div>
+      </div>
+    </div>
+
+    <!-- Lampu 4 -->
+    <div class="lamp-card" data-lamp="4">
+      <div class="lamp-icon off" id="lampIcon4">💡</div>
+      <div class="lamp-title">LAMPU 4</div>
+      <div class="lamp-status off" id="lampStatus4">OFF</div>
+      <div class="mode-select">
+        <button class="btn btn-option active" data-mode="manual" onclick="setLampMode(4,'manual')">Manual</button>
+        <button class="btn btn-option" data-mode="timer" onclick="setLampMode(4,'timer')">Timer</button>
+      </div>
+      <div id="lampControls4">
+        <div class="btn-group">
+          <button class="btn btn-on" onclick="controlLamp(4,'ON')">ON</button>
+          <button class="btn btn-off" onclick="controlLamp(4,'OFF')">OFF</button>
+        </div>
+      </div>
+      <div id="timerControls4" style="display:none; margin-top:8px;">
+        <div class="timer-group">
+          <label>Durasi</label>
+          <input type="number" id="timerMin4" min="0" value="0" style="width:60px;"> menit
+          <input type="number" id="timerSec4" min="0" max="59" value="30" style="width:60px;"> detik
+          <button class="btn btn-primary btn-sm" onclick="setTimer(4)">Set Timer</button>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Timer tersisa: <span id="timerRemain4">0s</span></div>
+      </div>
+    </div>
   </div>
 
   <!-- ========== SENSOR + DOOR/PUMP UTAMA ========== -->
@@ -413,101 +512,33 @@
         <button class="btn btn-primary btn-sm" onclick="applyVA()">Terapkan</button>
       </div>
     </div>
-
     <div class="power-monitor-grid">
-      <div class="power-item">
-        <div class="power-value" id="pzV">-- <span class="power-unit">V</span></div>
-        <div class="power-label">Voltage <span id="vStatus" class="status-badge normal">Normal</span></div>
-      </div>
-      <div class="power-item">
-        <div class="power-value" id="pzA">-- <span class="power-unit">A</span></div>
-        <div class="power-label">Current <span id="aStatus" class="status-badge normal">Normal</span></div>
-      </div>
-      <div class="power-item">
-        <div class="power-value" id="pzW">-- <span class="power-unit">W</span></div>
-        <div class="power-label">Power <span id="wStatus" class="status-badge normal">Normal</span></div>
-      </div>
-      <div class="power-item">
-        <div class="power-value" id="pzVA">-- <span class="power-unit">VA</span></div>
-        <div class="power-label">Apparent Power</div>
-      </div>
-      <div class="power-item">
-        <div class="power-value" id="pzPF">-- <span class="power-unit">PF</span></div>
-        <div class="power-label">Power Factor <span id="pfStatus" class="status-badge normal">Normal</span></div>
-      </div>
-      <div class="power-item">
-        <div class="power-value" id="pzWh">-- <span class="power-unit">kWh</span></div>
-        <div class="power-label">Energy Total</div>
-      </div>
+      <div class="power-item"><div class="power-value" id="pzV">-- <span class="power-unit">V</span></div><div class="power-label">Voltage <span id="vStatus" class="status-badge normal">Normal</span></div></div>
+      <div class="power-item"><div class="power-value" id="pzA">-- <span class="power-unit">A</span></div><div class="power-label">Current <span id="aStatus" class="status-badge normal">Normal</span></div></div>
+      <div class="power-item"><div class="power-value" id="pzW">-- <span class="power-unit">W</span></div><div class="power-label">Power <span id="wStatus" class="status-badge normal">Normal</span></div></div>
+      <div class="power-item"><div class="power-value" id="pzVA">-- <span class="power-unit">VA</span></div><div class="power-label">Apparent Power</div></div>
+      <div class="power-item"><div class="power-value" id="pzPF">-- <span class="power-unit">PF</span></div><div class="power-label">Power Factor <span id="pfStatus" class="status-badge normal">Normal</span></div></div>
+      <div class="power-item"><div class="power-value" id="pzWh">-- <span class="power-unit">kWh</span></div><div class="power-label">Energy Total</div></div>
     </div>
-
     <div class="indicator-grid">
       <div class="indicator-item"><span>🔌 Tegangan</span><span id="indVoltage"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>⚡ Arus</span><span id="indCurrent"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>💪 Daya</span><span id="indPower"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>📊 Power Factor</span><span id="indPF"><span class="indicator-dot green"></span> Normal</span></div>
     </div>
-
-    <!-- ===== POWER DETAILS (CLICKABLE) ===== -->
     <div class="power-details-grid">
-      <div class="power-detail-item" onclick="openFormula('apparent')">
-        <div class="value" id="pzApparent">-- <span class="power-unit">VA</span></div>
-        <div class="label">Apparent Power (S)</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('reactive')">
-        <div class="value" id="pzReactive">-- <span class="power-unit">VAR</span></div>
-        <div class="label">Reactive Power (Q)</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('cosphi')">
-        <div class="value" id="pzCosPhi">-- <span class="power-unit">PF</span></div>
-        <div class="label">Cos Phi (PF)</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('efficiency')">
-        <div class="value" id="pzEff">-- <span class="power-unit">%</span></div>
-        <div class="label">Efficiency (PF×100)</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('frequency')">
-        <div class="value" id="pzFreq">-- <span class="power-unit">Hz</span></div>
-        <div class="label">Frequency</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('voltage')">
-        <div class="value" id="pzVoltageDetail">-- <span class="power-unit">V</span></div>
-        <div class="label">AC Voltage</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('current')">
-        <div class="value" id="pzCurrentDetail">-- <span class="power-unit">A</span></div>
-        <div class="label">AC Current</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
-      <div class="power-detail-item" onclick="openFormula('power')">
-        <div class="value" id="pzPowerDetail">-- <span class="power-unit">W</span></div>
-        <div class="label">AC Power (P)</div>
-        <span class="click-hint">↗ klik rumus</span>
-      </div>
+      <div class="power-detail-item" onclick="openFormula('apparent')"><div class="value" id="pzApparent">-- <span class="power-unit">VA</span></div><div class="label">Apparent Power (S)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('reactive')"><div class="value" id="pzReactive">-- <span class="power-unit">VAR</span></div><div class="label">Reactive Power (Q)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('cosphi')"><div class="value" id="pzCosPhi">-- <span class="power-unit">PF</span></div><div class="label">Cos Phi (PF)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('efficiency')"><div class="value" id="pzEff">-- <span class="power-unit">%</span></div><div class="label">Efficiency (PF×100)</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('frequency')"><div class="value" id="pzFreq">-- <span class="power-unit">Hz</span></div><div class="label">Frequency</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('voltage')"><div class="value" id="pzVoltageDetail">-- <span class="power-unit">V</span></div><div class="label">AC Voltage</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('current')"><div class="value" id="pzCurrentDetail">-- <span class="power-unit">A</span></div><div class="label">AC Current</div><span class="click-hint">↗ klik rumus</span></div>
+      <div class="power-detail-item" onclick="openFormula('power')"><div class="value" id="pzPowerDetail">-- <span class="power-unit">W</span></div><div class="label">AC Power (P)</div><span class="click-hint">↗ klik rumus</span></div>
     </div>
-
-    <!-- ===== MODAL RUMUS ===== -->
     <div class="modal-overlay" id="formulaModal">
-      <div class="modal-box">
-        <button class="modal-close" onclick="closeFormula()">✕</button>
-        <div class="modal-title" id="modalTitle">Apparent Power</div>
-        <div class="modal-sub" id="modalSub">Daya semu (S)</div>
-        <div class="modal-formula" id="modalFormula">S = V × I</div>
-        <div class="modal-desc" id="modalDesc">
-          <strong>Keterangan:</strong><br>
-          S = Daya semu (VA)<br>
-          V = Tegangan (V)<br>
-          I = Arus (A)
-        </div>
-      </div>
+      <div class="modal-box"><button class="modal-close" onclick="closeFormula()">✕</button><div class="modal-title" id="modalTitle">Apparent Power</div><div class="modal-sub" id="modalSub">Daya semu (S)</div><div class="modal-formula" id="modalFormula">S = V × I</div><div class="modal-desc" id="modalDesc"><strong>Keterangan:</strong><br>S = Daya semu (VA)<br>V = Tegangan (V)<br>I = Arus (A)</div></div>
     </div>
-
     <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:12px;" id="pzStatus">🟢 PZEM Connected</div>
   </div>
 
@@ -636,54 +667,14 @@ themeToggle.addEventListener('click', toggleTheme);
 // FORMULA MODAL
 // ============================================================
 const formulaData = {
-  apparent: {
-    title: 'Apparent Power (S)',
-    sub: 'Daya semu total yang mengalir',
-    formula: 'S = V × I',
-    desc: '<strong>Keterangan:</strong><br>S = Daya semu (VA)<br>V = Tegangan (V)<br>I = Arus (A)<br><br>Daya semu adalah kombinasi daya aktif dan reaktif.'
-  },
-  reactive: {
-    title: 'Reactive Power (Q)',
-    sub: 'Daya reaktif yang tidak melakukan kerja',
-    formula: 'Q = √(S² - P²)',
-    desc: '<strong>Keterangan:</strong><br>Q = Daya reaktif (VAR)<br>S = Daya semu (VA)<br>P = Daya aktif (W)<br><br>Daya reaktif digunakan oleh beban induktif/kapasitif.'
-  },
-  cosphi: {
-    title: 'Cos Phi (Power Factor)',
-    sub: 'Rasio daya aktif terhadap daya semu',
-    formula: 'PF = cos φ = P / S',
-    desc: '<strong>Keterangan:</strong><br>PF = Power Factor<br>P = Daya aktif (W)<br>S = Daya semu (VA)<br><br>PF = 1 ideal, PF < 0.85 kurang baik.'
-  },
-  efficiency: {
-    title: 'Efficiency (η)',
-    sub: 'Efisiensi daya dalam persen',
-    formula: 'η = PF × 100%',
-    desc: '<strong>Keterangan:</strong><br>η = Efisiensi (%)<br>PF = Power Factor<br><br>Semakin tinggi efisiensi, semakin baik pemanfaatan daya.'
-  },
-  frequency: {
-    title: 'Frequency (f)',
-    sub: 'Frekuensi listrik AC',
-    formula: 'f = 50 Hz (standar PLN)',
-    desc: '<strong>Keterangan:</strong><br>f = Frekuensi (Hz)<br><br>Standar PLN di Indonesia adalah 50 Hz.<br>Penyimpangan ±2 Hz masih dianggap normal.'
-  },
-  voltage: {
-    title: 'AC Voltage (V)',
-    sub: 'Tegangan listrik efektif',
-    formula: 'V = Vrms (Root Mean Square)',
-    desc: '<strong>Keterangan:</strong><br>V = Tegangan efektif (V)<br><br>Batas normal: 210-240V.<br><190V = Low Voltage, >250V = High Voltage.'
-  },
-  current: {
-    title: 'AC Current (I)',
-    sub: 'Arus listrik yang mengalir',
-    formula: 'I = P / (V × PF)',
-    desc: '<strong>Keterangan:</strong><br>I = Arus (A)<br>P = Daya (W)<br>V = Tegangan (V)<br>PF = Power Factor<br><br>Arus berbanding terbalik dengan tegangan dan PF.'
-  },
-  power: {
-    title: 'AC Power (P)',
-    sub: 'Daya aktif yang digunakan',
-    formula: 'P = V × I × PF',
-    desc: '<strong>Keterangan:</strong><br>P = Daya aktif (W)<br>V = Tegangan (V)<br>I = Arus (A)<br>PF = Power Factor<br><br>Ini adalah daya yang benar-benar digunakan untuk kerja.'
-  }
+  apparent: { title: 'Apparent Power (S)', sub: 'Daya semu total yang mengalir', formula: 'S = V × I', desc: '<strong>Keterangan:</strong><br>S = Daya semu (VA)<br>V = Tegangan (V)<br>I = Arus (A)<br><br>Daya semu adalah kombinasi daya aktif dan reaktif.' },
+  reactive: { title: 'Reactive Power (Q)', sub: 'Daya reaktif yang tidak melakukan kerja', formula: 'Q = √(S² - P²)', desc: '<strong>Keterangan:</strong><br>Q = Daya reaktif (VAR)<br>S = Daya semu (VA)<br>P = Daya aktif (W)<br><br>Daya reaktif digunakan oleh beban induktif/kapasitif.' },
+  cosphi: { title: 'Cos Phi (Power Factor)', sub: 'Rasio daya aktif terhadap daya semu', formula: 'PF = cos φ = P / S', desc: '<strong>Keterangan:</strong><br>PF = Power Factor<br>P = Daya aktif (W)<br>S = Daya semu (VA)<br><br>PF = 1 ideal, PF < 0.85 kurang baik.' },
+  efficiency: { title: 'Efficiency (η)', sub: 'Efisiensi daya dalam persen', formula: 'η = PF × 100%', desc: '<strong>Keterangan:</strong><br>η = Efisiensi (%)<br>PF = Power Factor<br><br>Semakin tinggi efisiensi, semakin baik pemanfaatan daya.' },
+  frequency: { title: 'Frequency (f)', sub: 'Frekuensi listrik AC', formula: 'f = 50 Hz (standar PLN)', desc: '<strong>Keterangan:</strong><br>f = Frekuensi (Hz)<br><br>Standar PLN di Indonesia adalah 50 Hz.<br>Penyimpangan ±2 Hz masih dianggap normal.' },
+  voltage: { title: 'AC Voltage (V)', sub: 'Tegangan listrik efektif', formula: 'V = Vrms (Root Mean Square)', desc: '<strong>Keterangan:</strong><br>V = Tegangan efektif (V)<br><br>Batas normal: 210-240V.<br><190V = Low Voltage, >250V = High Voltage.' },
+  current: { title: 'AC Current (I)', sub: 'Arus listrik yang mengalir', formula: 'I = P / (V × PF)', desc: '<strong>Keterangan:</strong><br>I = Arus (A)<br>P = Daya (W)<br>V = Tegangan (V)<br>PF = Power Factor<br><br>Arus berbanding terbalik dengan tegangan dan PF.' },
+  power: { title: 'AC Power (P)', sub: 'Daya aktif yang digunakan', formula: 'P = V × I × PF', desc: '<strong>Keterangan:</strong><br>P = Daya aktif (W)<br>V = Tegangan (V)<br>I = Arus (A)<br>PF = Power Factor<br><br>Ini adalah daya yang benar-benar digunakan untuk kerja.' }
 };
 
 function openFormula(key) {
@@ -699,13 +690,9 @@ function openFormula(key) {
 function closeFormula() {
   document.getElementById('formulaModal').classList.remove('active');
 }
-
-// Tutup modal saat klik overlay
 document.getElementById('formulaModal').addEventListener('click', function(e) {
   if (e.target === this) closeFormula();
 });
-
-// Tutup modal dengan tombol ESC
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeFormula();
 });
@@ -737,20 +724,24 @@ const TOPICS = {
   powerReset:'esp32/power/reset/cmd',
   wateringCmd:'esp32/watering/cmd',
   wateringConfig:'esp32/watering/config',
-  wateringStatus:'esp32/watering/status'
+  wateringStatus:'esp32/watering/status',
+  // Topics untuk lampu timer & kipas
+  lampMode:'esp32/lamp/mode',
+  lampTimer:'esp32/lamp/timer',
+  fanControl:'esp32/fan/control',
+  fanThreshold:'esp32/fan/threshold'
 };
 const HISTORY_STORAGE_KEY = 'rfid_history';
 const GRAPH_STORAGE_KEY = 'iot_graph_data';
 let client = null, connected = false, currentFilterHours = 24;
 
 // ============================================================
-// DATA GRAFIK (DENGAN LOCALSTORAGE)
+// DATA GRAFIK
 // ============================================================
 let sensorData = { time:[], temp:[], hum:[], soil:[], water:[] };
 let powerData = { time:[], voltage:[], current:[], power:[] };
 let filteredSensor = { time:[], temp:[], hum:[], soil:[], water:[] };
 let filteredPower = { time:[], voltage:[], current:[], power:[] };
-
 let chartTempHum, chartWaterSoil, chartPower;
 
 let houseVA = 1300;
@@ -813,7 +804,7 @@ const wateringThresholdDisplay = document.getElementById('wateringThresholdDispl
 const wateringMsg = document.getElementById('wateringMsg');
 
 // ============================================================
-// STORAGE FUNCTIONS UNTUK GRAFIK
+// STORAGE FUNCTIONS
 // ============================================================
 function loadGraphData() {
   try {
@@ -829,7 +820,6 @@ function loadGraphData() {
   } catch(e) {}
   return false;
 }
-
 function saveGraphData() {
   try {
     const data = { sensor: sensorData, power: powerData };
@@ -837,9 +827,6 @@ function saveGraphData() {
   } catch(e) {}
 }
 
-// ============================================================
-// HISTORY
-// ============================================================
 function loadHistory(){ try{ const s=localStorage.getItem(HISTORY_STORAGE_KEY); return s?JSON.parse(s):[]; }catch(e){ return []; } }
 function saveHistory(h){ try{ localStorage.setItem(HISTORY_STORAGE_KEY,JSON.stringify(h)); }catch(e){} }
 function displayHistory(h){
@@ -856,7 +843,6 @@ function setHistoryList(arr){ if(!arr||arr.length===0) return; const items=arr.m
 function applyFilter() {
   const now = Date.now();
   const cutoff = now - currentFilterHours * 3600 * 1000;
-  // Sensor
   let idx = 0;
   for(let i=0; i<sensorData.time.length; i++) {
     if(sensorData.time[i] >= cutoff) { idx = i; break; }
@@ -866,7 +852,6 @@ function applyFilter() {
   filteredSensor.hum = sensorData.hum.slice(idx);
   filteredSensor.soil = sensorData.soil.slice(idx);
   filteredSensor.water = sensorData.water.slice(idx);
-  // Power
   let idxP = 0;
   for(let i=0; i<powerData.time.length; i++) {
     if(powerData.time[i] >= cutoff) { idxP = i; break; }
@@ -935,7 +920,6 @@ function initCharts() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-secondary)', boxWidth: 12 } } }, scales: { x: { ticks: { color: 'var(--text-muted)', maxTicksLimit: 10 }, grid: { color: 'var(--border-card)' } }, y: { ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--border-card)' } } } }
   });
 }
-
 function updateCharts() {
   const labels = filteredSensor.time.map(ts => new Date(ts).toLocaleTimeString());
   if(chartTempHum) {
@@ -1014,6 +998,56 @@ function updateWateringUI(status, mode, soil, threshold) {
 }
 
 // ============================================================
+// LAMP FUNCTIONS (WEB -> MQTT)
+// ============================================================
+function controlLamp(num, state) {
+  if(client && connected) client.publish('esp32/lamp'+num, state);
+}
+function setLampMode(num, mode) {
+  if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
+  // Update UI buttons
+  const card = document.querySelector(`.lamp-card[data-lamp="${num}"]`);
+  const btns = card.querySelectorAll('.mode-select .btn');
+  btns.forEach(b => b.classList.remove('active'));
+  const activeBtn = card.querySelector(`.mode-select .btn[data-mode="${mode}"]`);
+  if(activeBtn) activeBtn.classList.add('active');
+  // Tampilkan kontrol yang sesuai
+  const lampControls = card.querySelector(`#lampControls${num}`);
+  const timerControls = card.querySelector(`#timerControls${num}`);
+  const fanControls = card.querySelector(`#fanControls${num}`);
+  if(lampControls) lampControls.style.display = (mode === 'manual' || mode === 'fan') ? 'block' : 'none';
+  if(timerControls) timerControls.style.display = (mode === 'timer') ? 'block' : 'none';
+  if(fanControls) fanControls.style.display = (mode === 'fan') ? 'block' : 'none';
+  // Ganti title lampu 1 jika mode fan
+  if(num === 1) {
+    const title = document.getElementById('lampTitle1');
+    if(mode === 'fan') title.textContent = 'KIPAS 1';
+    else title.textContent = 'LAMPU 1';
+  }
+  // Kirim ke ESP32
+  client.publish('esp32/lamp/mode', JSON.stringify({num, mode}));
+}
+function setTimer(num) {
+  if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
+  const min = parseInt(document.getElementById(`timerMin${num}`).value) || 0;
+  const sec = parseInt(document.getElementById(`timerSec${num}`).value) || 0;
+  const totalSec = min*60 + sec;
+  if(totalSec <= 0) { alert('Durasi harus > 0'); return; }
+  client.publish('esp32/lamp/timer', JSON.stringify({num, duration: totalSec}));
+  showCalibMsg(`⏱️ Timer lampu ${num} diset ${totalSec} detik`, true);
+}
+function controlFan(num, state) {
+  if(client && connected) client.publish('esp32/fan/control', JSON.stringify({num, state}));
+}
+function setFanThreshold(num) {
+  if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
+  const threshold = parseInt(document.getElementById(`fanThreshold${num}`).value);
+  if(isNaN(threshold)) { alert('Masukkan suhu valid'); return; }
+  client.publish('esp32/fan/threshold', JSON.stringify({num, threshold}));
+  showCalibMsg(`🌡️ Threshold kipas ${num} = ${threshold}°C`, true);
+}
+
+// ============================================================
 // POWER STATUS & DETAILS
 // ============================================================
 function applyVA() {
@@ -1026,13 +1060,11 @@ function applyVA() {
   else updateThresholds(220);
   document.querySelector('.va-setting label').innerHTML = `🏠 Kapasitas (VA): <strong>${va}</strong>`;
 }
-
 function updateThresholds(voltage) {
   if(voltage > 0) maxCurrent = houseVA / voltage;
   else maxCurrent = houseVA / 220;
   maxCurrent = Math.round(maxCurrent * 100) / 100;
 }
-
 function updateStatus(value, thresholdLow, thresholdHigh, type) {
   let dot = 'green', label = 'Normal', cls = 'normal';
   if(type === 'voltage') {
@@ -1058,7 +1090,6 @@ function updateStatus(value, thresholdLow, thresholdHigh, type) {
   }
   return { dot:'green', label:'Normal', cls:'normal' };
 }
-
 function updatePowerUI(data) {
   const v = data.voltage || 0;
   const a = data.current || 0;
@@ -1073,36 +1104,25 @@ function updatePowerUI(data) {
   } else if (w > va) {
     reactive = 0;
   }
-
   updateThresholds(v);
-
   pzV.innerHTML = v.toFixed(1) + ' <span class="power-unit">V</span>';
   pzA.innerHTML = a.toFixed(2) + ' <span class="power-unit">A</span>';
   pzW.innerHTML = w.toFixed(1) + ' <span class="power-unit">W</span>';
   pzVA.innerHTML = va.toFixed(1) + ' <span class="power-unit">VA</span>';
   pzPF.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
   pzWh.innerHTML = wh.toFixed(3) + ' <span class="power-unit">kWh</span>';
-
   let vStat = updateStatus(v, 190, 250, 'voltage');
-  vStatus.textContent = vStat.label;
-  vStatus.className = 'status-badge ' + vStat.cls;
+  vStatus.textContent = vStat.label; vStatus.className = 'status-badge ' + vStat.cls;
   indVoltage.innerHTML = `<span class="indicator-dot ${vStat.dot}"></span> ${vStat.label}`;
-
   let aStat = updateStatus(a, 0, maxCurrent, 'current');
-  aStatus.textContent = aStat.label;
-  aStatus.className = 'status-badge ' + aStat.cls;
+  aStatus.textContent = aStat.label; aStatus.className = 'status-badge ' + aStat.cls;
   indCurrent.innerHTML = `<span class="indicator-dot ${aStat.dot}"></span> ${aStat.label} (Max ${maxCurrent.toFixed(1)}A)`;
-
   let wStat = updateStatus(w, 0, maxPower, 'power');
-  wStatus.textContent = wStat.label;
-  wStatus.className = 'status-badge ' + wStat.cls;
+  wStatus.textContent = wStat.label; wStatus.className = 'status-badge ' + wStat.cls;
   indPower.innerHTML = `<span class="indicator-dot ${wStat.dot}"></span> ${wStat.label} (Max ${maxPower}W)`;
-
   let pfStat = updateStatus(pf, 0, 0.85, 'pf');
-  pfStatus.textContent = pfStat.label;
-  pfStatus.className = 'status-badge ' + pfStat.cls;
+  pfStatus.textContent = pfStat.label; pfStatus.className = 'status-badge ' + pfStat.cls;
   indPF.innerHTML = `<span class="indicator-dot ${pfStat.dot}"></span> ${pfStat.label}`;
-
   pzApparent.innerHTML = va.toFixed(1) + ' <span class="power-unit">VA</span>';
   pzReactive.innerHTML = reactive.toFixed(1) + ' <span class="power-unit">VAR</span>';
   pzCosPhi.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
@@ -1111,10 +1131,8 @@ function updatePowerUI(data) {
   pzVoltageDetail.innerHTML = v.toFixed(1) + ' <span class="power-unit">V</span>';
   pzCurrentDetail.innerHTML = a.toFixed(2) + ' <span class="power-unit">A</span>';
   pzPowerDetail.innerHTML = w.toFixed(1) + ' <span class="power-unit">W</span>';
-
   if(v > 0) pzStatus.innerHTML = '🟢 PZEM Connected';
   else pzStatus.innerHTML = '🔴 PZEM Not Detected';
-
   const ts = Date.now();
   addPowerDataPoint(ts, v, a, w);
 }
@@ -1128,7 +1146,6 @@ function pumpControl(cmd){ if(client&&connected) client.publish(TOPICS.pumpContr
 function resetEnergy(){ if(client&&connected&&confirm('Reset energi PZEM ke 0?')) client.publish(TOPICS.powerReset,'RESET'); }
 function addCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidAdd,u); document.getElementById('cardUid').value=''; alert('✅ Kartu '+u+' ditambahkan'); } }
 function delCard(){ const u=document.getElementById('cardUid').value.trim().toUpperCase(); if(!u){ alert('Masukkan UID kartu!'); return; } if(client&&connected){ client.publish(TOPICS.rfidDel,u); document.getElementById('cardUid').value=''; alert('🗑️ Kartu '+u+' dihapus'); } }
-
 function wateringCmd(cmd) {
   if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
   client.publish(TOPICS.wateringCmd, cmd);
@@ -1146,7 +1163,6 @@ function sendWateringConfig() {
   client.publish(TOPICS.wateringConfig, JSON.stringify(cfg));
   showWateringMsg('✅ Konfigurasi penyiraman dikirim', true);
 }
-
 function sendCalibration() {
   if(!client||!connected){ alert('MQTT tidak terhubung!'); return; }
   const cfg = {
@@ -1183,14 +1199,56 @@ function applyCalibFromESP32(data) {
     wateringThresholdDisplay.textContent = data.soilThreshold;
     document.getElementById('waterThreshold').value = data.soilThreshold;
   }
+  // Update lamp modes, timer, fan status jika ada
+  if(data.lampModes) {
+    for(let i=1; i<=4; i++) {
+      const mode = data.lampModes[i];
+      if(mode) setLampModeUI(i, mode);
+    }
+  }
+  if(data.timerRemaining) {
+    for(let i=1; i<=4; i++) {
+      const remain = data.timerRemaining[i];
+      if(remain !== undefined) document.getElementById(`timerRemain${i}`).textContent = remain + 's';
+    }
+  }
+  if(data.fanThresholds) {
+    for(let i=1; i<=4; i++) {
+      const th = data.fanThresholds[i];
+      if(th !== undefined) document.getElementById(`fanThreshold${i}`).value = th;
+    }
+  }
   showCalibMsg('✅ Kalibrasi dari ESP32 diterima', true);
+}
+function setLampModeUI(num, mode) {
+  const card = document.querySelector(`.lamp-card[data-lamp="${num}"]`);
+  if(!card) return;
+  const btns = card.querySelectorAll('.mode-select .btn');
+  btns.forEach(b => b.classList.remove('active'));
+  const activeBtn = card.querySelector(`.mode-select .btn[data-mode="${mode}"]`);
+  if(activeBtn) activeBtn.classList.add('active');
+  const lampControls = card.querySelector(`#lampControls${num}`);
+  const timerControls = card.querySelector(`#timerControls${num}`);
+  const fanControls = card.querySelector(`#fanControls${num}`);
+  if(lampControls) lampControls.style.display = (mode === 'manual' || mode === 'fan') ? 'block' : 'none';
+  if(timerControls) timerControls.style.display = (mode === 'timer') ? 'block' : 'none';
+  if(fanControls) fanControls.style.display = (mode === 'fan') ? 'block' : 'none';
+  if(num === 1) {
+    const title = document.getElementById('lampTitle1');
+    if(mode === 'fan') title.textContent = 'KIPAS 1';
+    else title.textContent = 'LAMPU 1';
+  }
 }
 
 // ============================================================
 // PROCESS DATA
 // ============================================================
 function processSensorData(data) {
-  if(data.temp !== undefined) sTemp.innerHTML = data.temp.toFixed(1) + '<span class="sensor-unit">°C</span>';
+  if(data.temp !== undefined) {
+    sTemp.innerHTML = data.temp.toFixed(1) + '<span class="sensor-unit">°C</span>';
+    // Update suhu untuk kipas lampu 1
+    document.getElementById('currentTemp1').textContent = data.temp.toFixed(1);
+  }
   if(data.hum !== undefined) sHum.innerHTML = data.hum.toFixed(0) + '<span class="sensor-unit">%</span>';
   if(data.soil !== undefined) {
     sSoil.innerHTML = data.soil + '<span class="sensor-unit">%</span>';
@@ -1208,6 +1266,20 @@ function processSensorData(data) {
       document.getElementById('waterThreshold').value = data.soil_threshold;
     }
   }
+  // Update status lampu (ON/OFF) dari data sensor
+  for(let i=1; i<=4; i++) {
+    const key = `lamp${i}`;
+    if(data[key] !== undefined) {
+      updateLampUI(i, data[key]);
+    }
+  }
+  // Update timer remaining
+  if(data.timerRemaining) {
+    for(let i=1; i<=4; i++) {
+      const remain = data.timerRemaining[i];
+      if(remain !== undefined) document.getElementById(`timerRemain${i}`).textContent = remain + 's';
+    }
+  }
   if(data.pzem_voltage !== undefined) {
     updatePowerUI({
       voltage: data.pzem_voltage,
@@ -1221,16 +1293,13 @@ function processSensorData(data) {
   const ts = Date.now();
   addSensorDataPoint(ts, data.temp || 0, data.hum || 0, data.soil || 0, data.water_level || 0);
 }
-
 function processPowerData(data) {
   updatePowerUI(data);
 }
-
 function processLampAll(data) {
-  if(data.lamp1) updateLampUI(1, data.lamp1);
-  if(data.lamp2) updateLampUI(2, data.lamp2);
-  if(data.lamp3) updateLampUI(3, data.lamp3);
-  if(data.lamp4) updateLampUI(4, data.lamp4);
+  for(let i=1; i<=4; i++) {
+    if(data[`lamp${i}`] !== undefined) updateLampUI(i, data[`lamp${i}`]);
+  }
 }
 
 // ============================================================
@@ -1328,21 +1397,23 @@ function setupFilter() {
 // INIT
 // ============================================================
 window.onload = function() {
-  // Muat history RFID dari localStorage
   displayHistory(loadHistory());
-
-  // Muat grafik dari localStorage
-  if (loadGraphData()) {
-    console.log('📊 Graph data loaded from localStorage');
-  } else {
-    console.log('📊 No graph data found in localStorage');
-  }
-
+  if (loadGraphData()) console.log('📊 Graph data loaded');
   initCharts();
   applyVA();
   setupFilter();
   connectMQTT();
   updateLabels();
+  // Default mode manual for all lamps
+  for(let i=1; i<=4; i++) {
+    // set default UI
+    document.querySelector(`.lamp-card[data-lamp="${i}"] .mode-select .btn[data-mode="manual"]`).classList.add('active');
+    document.getElementById(`timerControls${i}`).style.display = 'none';
+    if(i===1) {
+      document.getElementById(`fanControls${i}`).style.display = 'none';
+      document.getElementById(`lampControls${i}`).style.display = 'block';
+    }
+  }
   console.log('🚀 Dashboard loaded.');
 };
 </script>
