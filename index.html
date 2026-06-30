@@ -396,7 +396,7 @@ function updateLampUI(num,state){ const icon=document.getElementById('lampIcon'+
 function showCalibMsg(msg,ok=true){ calibMsg.textContent=msg; calibMsg.style.color=ok?'#10b981':'#ef4444'; setTimeout(()=>{ calibMsg.textContent=''; },3000); }
 
 // ============================================================
-// WATERING UI
+// WATERING UI (FIXED: cegah nilai >100)
 // ============================================================
 function updateWateringUI(status, mode, soil, threshold) {
   if(status === 'ON') {
@@ -407,7 +407,13 @@ function updateWateringUI(status, mode, soil, threshold) {
     wateringStatusBadge.className = 'watering-status-badge off';
   }
   wateringModeBadge.textContent = mode === 'AUTO' ? '🤖 AUTO' : '👆 MANUAL';
-  if(soil !== undefined) wateringSoilDisplay.textContent = soil;
+  
+  // Pastikan nilai kelembaban tidak > 100 (filter raw ADC)
+  if(soil !== undefined) {
+    let val = soil;
+    if(val > 100) val = '--'; // filter nilai tidak valid
+    wateringSoilDisplay.textContent = val;
+  }
   if(threshold !== undefined) wateringThresholdDisplay.textContent = threshold;
 }
 
@@ -481,8 +487,10 @@ function processSensorData(data){
   if(data.hum!==undefined) sHum.innerHTML=data.hum.toFixed(0)+'<span class="sensor-unit">%</span>';
   if(data.soil!==undefined) {
     sSoil.innerHTML=data.soil+'<span class="sensor-unit">%</span>';
-    // Update watering soil display
-    wateringSoilDisplay.textContent = data.soil;
+    // Update watering soil display (pastikan tidak >100)
+    let val = data.soil;
+    if(val > 100) val = '--';
+    wateringSoilDisplay.textContent = val;
   }
   if(data.water_level!==undefined){ sWater.innerHTML=data.water_level.toFixed(1)+'<span class="sensor-unit">%</span>'; updateWaterUI(data.water_level); }
   if(data.pump_status) updatePumpUI(data.pump_status,data.pump_mode||'AUTO');
