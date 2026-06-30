@@ -133,6 +133,34 @@
     .power-unit { font-size:0.8rem; color:var(--text-muted); margin-left:4px; }
     .power-label { font-size:0.7rem; color:var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.04em; }
 
+    /* Power Details Grid */
+    .power-details-grid {
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+      margin-top:16px;
+      padding-top:16px;
+      border-top:1px solid var(--border-card);
+    }
+    .power-detail-item {
+      background:var(--bg-card);
+      border-radius:10px;
+      padding:8px 12px;
+      text-align:center;
+      border:1px solid var(--border-card);
+    }
+    .power-detail-item .value {
+      font-size:1.2rem;
+      font-weight:600;
+      color:var(--text-primary);
+    }
+    .power-detail-item .label {
+      font-size:0.65rem;
+      color:var(--text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+    }
+
     .status-badge { display:inline-block; padding:4px 12px; border-radius:30px; font-size:0.7rem; font-weight:600; margin-top:4px; }
     .status-badge.normal { background:#10b981; color:#fff; }
     .status-badge.warning { background:#f59e0b; color:#000; }
@@ -220,6 +248,7 @@
     @media (max-width:768px) {
       .grid-4, .grid-2 { grid-template-columns:1fr; }
       .power-monitor-grid { grid-template-columns:1fr 1fr; }
+      .power-details-grid { grid-template-columns:1fr 1fr; }
       .sensor-grid { grid-template-columns:1fr 1fr; }
       .indicator-grid { grid-template-columns:1fr; }
       .header { flex-direction:column; align-items:stretch; text-align:center; }
@@ -331,6 +360,42 @@
       <div class="indicator-item"><span>⚡ Arus</span><span id="indCurrent"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>💪 Daya</span><span id="indPower"><span class="indicator-dot green"></span> Normal</span></div>
       <div class="indicator-item"><span>📊 Power Factor</span><span id="indPF"><span class="indicator-dot green"></span> Normal</span></div>
+    </div>
+
+    <!-- ===== POWER DETAILS (RUMUS) ===== -->
+    <div class="power-details-grid">
+      <div class="power-detail-item">
+        <div class="value" id="pzApparent">-- <span class="power-unit">VA</span></div>
+        <div class="label">Apparent Power</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzReactive">-- <span class="power-unit">VAR</span></div>
+        <div class="label">Reactive Power</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzCosPhi">-- <span class="power-unit">PF</span></div>
+        <div class="label">Cos Phi</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzEff">-- <span class="power-unit">%</span></div>
+        <div class="label">Effisiensi (PF*100)</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzFreq">-- <span class="power-unit">Hz</span></div>
+        <div class="label">Frequency</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzVoltageDetail">-- <span class="power-unit">V</span></div>
+        <div class="label">AC Voltage</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzCurrentDetail">-- <span class="power-unit">A</span></div>
+        <div class="label">AC Current</div>
+      </div>
+      <div class="power-detail-item">
+        <div class="value" id="pzPowerDetail">-- <span class="power-unit">W</span></div>
+        <div class="label">AC Power</div>
+      </div>
     </div>
 
     <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:12px;" id="pzStatus">🟢 PZEM Connected</div>
@@ -546,6 +611,16 @@ const indPower = document.getElementById('indPower');
 const indPF = document.getElementById('indPF');
 const houseVAInput = document.getElementById('houseVA');
 
+// Power Details
+const pzApparent = document.getElementById('pzApparent');
+const pzReactive = document.getElementById('pzReactive');
+const pzCosPhi = document.getElementById('pzCosPhi');
+const pzEff = document.getElementById('pzEff');
+const pzFreq = document.getElementById('pzFreq');
+const pzVoltageDetail = document.getElementById('pzVoltageDetail');
+const pzCurrentDetail = document.getElementById('pzCurrentDetail');
+const pzPowerDetail = document.getElementById('pzPowerDetail');
+
 // Watering DOM
 const wateringStatusBadge = document.getElementById('wateringStatusBadge');
 const wateringModeBadge = document.getElementById('wateringModeBadge');
@@ -730,7 +805,7 @@ function updateWateringUI(status, mode, soil, threshold) {
 }
 
 // ============================================================
-// POWER STATUS
+// POWER STATUS & DETAILS
 // ============================================================
 function applyVA() {
   let va = parseInt(houseVAInput.value);
@@ -781,10 +856,19 @@ function updatePowerUI(data) {
   const w = data.power || 0;
   const pf = data.power_factor || 0;
   const wh = data.energy || 0;
+  const freq = data.frequency || 0;
   const va = (v * a) || 0;
+  // reactive power = sqrt(apparent^2 - real^2)
+  let reactive = 0;
+  if (va > 0 && w <= va) {
+    reactive = Math.sqrt(va * va - w * w);
+  } else if (w > va) {
+    reactive = 0;
+  }
 
   updateThresholds(v);
 
+  // Main grid
   pzV.innerHTML = v.toFixed(1) + ' <span class="power-unit">V</span>';
   pzA.innerHTML = a.toFixed(2) + ' <span class="power-unit">A</span>';
   pzW.innerHTML = w.toFixed(1) + ' <span class="power-unit">W</span>';
@@ -792,6 +876,7 @@ function updatePowerUI(data) {
   pzPF.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
   pzWh.innerHTML = wh.toFixed(3) + ' <span class="power-unit">kWh</span>';
 
+  // Status indicators
   let vStat = updateStatus(v, 190, 250, 'voltage');
   vStatus.textContent = vStat.label;
   vStatus.className = 'status-badge ' + vStat.cls;
@@ -811,6 +896,16 @@ function updatePowerUI(data) {
   pfStatus.textContent = pfStat.label;
   pfStatus.className = 'status-badge ' + pfStat.cls;
   indPF.innerHTML = `<span class="indicator-dot ${pfStat.dot}"></span> ${pfStat.label}`;
+
+  // Power details
+  pzApparent.innerHTML = va.toFixed(1) + ' <span class="power-unit">VA</span>';
+  pzReactive.innerHTML = reactive.toFixed(1) + ' <span class="power-unit">VAR</span>';
+  pzCosPhi.innerHTML = pf.toFixed(2) + ' <span class="power-unit">PF</span>';
+  pzEff.innerHTML = (pf * 100).toFixed(1) + ' <span class="power-unit">%</span>';
+  pzFreq.innerHTML = freq.toFixed(1) + ' <span class="power-unit">Hz</span>';
+  pzVoltageDetail.innerHTML = v.toFixed(1) + ' <span class="power-unit">V</span>';
+  pzCurrentDetail.innerHTML = a.toFixed(2) + ' <span class="power-unit">A</span>';
+  pzPowerDetail.innerHTML = w.toFixed(1) + ' <span class="power-unit">W</span>';
 
   if(v > 0) pzStatus.innerHTML = '🟢 PZEM Connected';
   else pzStatus.innerHTML = '🔴 PZEM Not Detected';
@@ -917,7 +1012,8 @@ function processSensorData(data) {
       current: data.pzem_current,
       power: data.pzem_power,
       energy: data.pzem_energy,
-      power_factor: data.pzem_power_factor
+      power_factor: data.pzem_power_factor,
+      frequency: data.pzem_frequency
     });
   }
   // Add to sensor chart
