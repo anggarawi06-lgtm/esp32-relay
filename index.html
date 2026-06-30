@@ -7,51 +7,111 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ===== RESET & VARIABLES ===== */
+    /* ===== CSS VARIABLES (DEFAULT DARK) ===== */
+    :root {
+      --bg-body: #0b1120;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.08);
+      --border-card: rgba(255,255,255,0.06);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --bg-input: #1e293b;
+      --border-input: #334155;
+      --bg-water-container: #1e293b;
+      --bg-threshold: #1e293b;
+      --bg-pump: #1e293b;
+      --bg-rfid: #1e293b;
+      --bg-history: #1e293b;
+      --bg-watering: rgba(16,185,129,0.05);
+      --border-watering: rgba(16,185,129,0.15);
+      --shadow-header: 0 8px 20px rgba(0,0,0,0.3);
+      --filter-bg: rgba(255,255,255,0.04);
+    }
+
+    /* ===== LIGHT THEME ===== */
+    [data-theme="light"] {
+      --bg-body: #f1f5f9;
+      --bg-card: rgba(255,255,255,0.85);
+      --bg-card-hover: rgba(255,255,255,0.95);
+      --border-card: rgba(0,0,0,0.08);
+      --text-primary: #0b1120;
+      --text-secondary: #1e293b;
+      --text-muted: #475569;
+      --bg-input: #ffffff;
+      --border-input: #cbd5e1;
+      --bg-water-container: #e2e8f0;
+      --bg-threshold: #e2e8f0;
+      --bg-pump: #e2e8f0;
+      --bg-rfid: #e2e8f0;
+      --bg-history: #e2e8f0;
+      --bg-watering: rgba(16,185,129,0.08);
+      --border-watering: rgba(16,185,129,0.25);
+      --shadow-header: 0 8px 20px rgba(0,0,0,0.08);
+      --filter-bg: rgba(0,0,0,0.04);
+    }
+
+    /* ===== RESET & BASE ===== */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
-    body { background:#0b1120; color:#e2e8f0; padding:20px; min-height:100vh; }
+    body { background:var(--bg-body); color:var(--text-primary); padding:20px; min-height:100vh; transition:background 0.3s, color 0.3s; }
     .container { max-width:1440px; margin:0 auto; }
 
     /* ===== HEADER ===== */
-    .header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:rgba(255,255,255,0.04); backdrop-filter:blur(12px); padding:16px 24px; border-radius:24px; border:1px solid rgba(255,255,255,0.06); margin-bottom:24px; }
+    .header {
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
+      background:var(--bg-card); backdrop-filter:blur(12px); padding:16px 24px; border-radius:24px;
+      border:1px solid var(--border-card); margin-bottom:24px; box-shadow:var(--shadow-header);
+      transition:background 0.3s, border 0.3s;
+    }
     .header-left { display:flex; align-items:center; gap:12px; }
-    .header-left h1 { font-size:1.6rem; font-weight:700; }
+    .header-left h1 { font-size:1.6rem; font-weight:700; color:var(--text-primary); }
     .header-left h1 span { color:#38bdf8; }
-    .badge-esp { background:#1e293b; padding:4px 14px; border-radius:30px; font-size:0.7rem; color:#94a3b8; border:1px solid #334155; }
+    .badge-esp { background:var(--bg-input); padding:4px 14px; border-radius:30px; font-size:0.7rem; color:var(--text-secondary); border:1px solid var(--border-input); }
+    .header-right { display:flex; align-items:center; gap:12px; }
+
     .conn-status { padding:8px 20px; border-radius:30px; font-weight:600; font-size:0.85rem; background:#fbbf24; color:#0b1120; display:flex; align-items:center; gap:8px; }
     .conn-status.online { background:#10b981; color:#fff; }
     .conn-status.offline { background:#ef4444; color:#fff; }
     .conn-status .dot { width:8px; height:8px; border-radius:50%; background:currentColor; display:inline-block; }
 
+    /* Theme Toggle */
+    .theme-toggle {
+      background:var(--bg-input); border:1px solid var(--border-input); border-radius:30px;
+      padding:6px 12px; cursor:pointer; display:flex; align-items:center; gap:8px;
+      color:var(--text-secondary); font-size:0.85rem; transition:0.2s;
+    }
+    .theme-toggle:hover { border-color:#38bdf8; }
+    .theme-toggle .icon { font-size:1.1rem; }
+
     /* ===== FILTER BAR ===== */
-    .filter-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:rgba(255,255,255,0.04); padding:12px 20px; border-radius:18px; border:1px solid rgba(255,255,255,0.06); margin-bottom:24px; }
-    .filter-btn { padding:6px 16px; border:none; border-radius:30px; background:#1e293b; color:#94a3b8; font-weight:500; font-size:0.8rem; cursor:pointer; transition:0.2s; border:1px solid transparent; }
-    .filter-btn:hover { background:#334155; color:#f1f5f9; }
+    .filter-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:var(--filter-bg); padding:12px 20px; border-radius:18px; border:1px solid var(--border-card); margin-bottom:24px; transition:background 0.3s; }
+    .filter-btn { padding:6px 16px; border:none; border-radius:30px; background:var(--bg-input); color:var(--text-muted); font-weight:500; font-size:0.8rem; cursor:pointer; transition:0.2s; border:1px solid transparent; }
+    .filter-btn:hover { background:var(--bg-card-hover); color:var(--text-primary); }
     .filter-btn.active { background:#2563eb; color:#fff; border-color:#3b82f6; box-shadow:0 0 20px rgba(37,99,235,0.2); }
-    .filter-right { flex:1; text-align:right; font-size:0.8rem; color:#64748b; }
+    .filter-right { flex:1; text-align:right; font-size:0.8rem; color:var(--text-muted); }
 
     /* ===== GRID ===== */
     .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:24px; }
     .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }
 
     /* ===== CARDS ===== */
-    .card { background:rgba(255,255,255,0.04); backdrop-filter:blur(8px); border-radius:20px; padding:20px; border:1px solid rgba(255,255,255,0.06); transition:0.2s; }
-    .card:hover { border-color:rgba(255,255,255,0.12); }
-    .card-title { font-weight:600; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.04em; color:#94a3b8; margin-bottom:14px; display:flex; align-items:center; gap:10px; justify-content:space-between; }
+    .card { background:var(--bg-card); backdrop-filter:blur(8px); border-radius:20px; padding:20px; border:1px solid var(--border-card); transition:background 0.3s, border 0.3s, transform 0.2s; }
+    .card:hover { border-color:var(--border-card); background:var(--bg-card-hover); }
+    .card-title { font-weight:600; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-secondary); margin-bottom:14px; display:flex; align-items:center; gap:10px; justify-content:space-between; }
     .card-title .icon { font-size:1.2rem; }
 
     /* ===== LAMP CARD ===== */
-    .lamp-card { background:rgba(255,255,255,0.04); border-radius:18px; padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
+    .lamp-card { background:var(--bg-card); border-radius:18px; padding:16px; text-align:center; border:1px solid var(--border-card); transition:background 0.3s, border 0.3s; }
     .lamp-icon { font-size:2.4rem; transition:0.2s; }
     .lamp-icon.on { color:#fbbf24; filter:drop-shadow(0 0 12px rgba(251,191,36,0.3)); }
-    .lamp-icon.off { color:#475569; }
-    .lamp-title { font-weight:600; margin:6px 0 8px; font-size:0.9rem; }
+    .lamp-icon.off { color:var(--text-muted); }
+    .lamp-title { font-weight:600; margin:6px 0 8px; font-size:0.9rem; color:var(--text-primary); }
     .lamp-status { font-size:0.7rem; padding:3px 12px; border-radius:30px; display:inline-block; font-weight:600; margin-bottom:10px; }
     .lamp-status.on { background:#10b981; color:#fff; }
     .lamp-status.off { background:#ef4444; color:#fff; }
-    .btn-group { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
 
     /* ===== BUTTONS ===== */
+    .btn-group { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
     .btn { padding:6px 16px; border:none; border-radius:30px; font-weight:600; font-size:0.75rem; cursor:pointer; transition:0.2s; text-transform:uppercase; letter-spacing:0.04em; }
     .btn-on { background:#10b981; color:#fff; }
     .btn-off { background:#ef4444; color:#fff; }
@@ -61,17 +121,17 @@
 
     /* ===== SENSOR ===== */
     .sensor-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-    .sensor-item { background:rgba(255,255,255,0.04); border-radius:12px; padding:12px; text-align:center; }
-    .sensor-value { font-size:2rem; font-weight:700; color:#f1f5f9; }
-    .sensor-unit { font-size:0.8rem; color:#64748b; margin-left:2px; }
-    .sensor-label { font-size:0.7rem; color:#64748b; margin-top:2px; }
+    .sensor-item { background:var(--bg-card); border-radius:12px; padding:12px; text-align:center; border:1px solid var(--border-card); transition:background 0.3s; }
+    .sensor-value { font-size:2rem; font-weight:700; color:var(--text-primary); }
+    .sensor-unit { font-size:0.8rem; color:var(--text-muted); margin-left:2px; }
+    .sensor-label { font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
 
     /* ===== POWER MONITOR ===== */
     .power-monitor-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px; }
-    .power-item { background:rgba(255,255,255,0.03); border-radius:14px; padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
-    .power-value { font-size:1.8rem; font-weight:700; color:#f1f5f9; line-height:1.2; }
-    .power-unit { font-size:0.8rem; color:#64748b; margin-left:4px; }
-    .power-label { font-size:0.7rem; color:#64748b; margin-top:4px; text-transform:uppercase; letter-spacing:0.04em; }
+    .power-item { background:var(--bg-card); border-radius:14px; padding:16px; text-align:center; border:1px solid var(--border-card); transition:background 0.3s; }
+    .power-value { font-size:1.8rem; font-weight:700; color:var(--text-primary); line-height:1.2; }
+    .power-unit { font-size:0.8rem; color:var(--text-muted); margin-left:4px; }
+    .power-label { font-size:0.7rem; color:var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.04em; }
 
     .status-badge { display:inline-block; padding:4px 12px; border-radius:30px; font-size:0.7rem; font-weight:600; margin-top:4px; }
     .status-badge.normal { background:#10b981; color:#fff; }
@@ -79,52 +139,52 @@
     .status-badge.danger { background:#ef4444; color:#fff; }
 
     .indicator-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
-    .indicator-item { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:10px; }
+    .indicator-item { display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:10px 14px; border-radius:10px; border:1px solid var(--border-card); transition:background 0.3s; color:var(--text-primary); }
+
     .indicator-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px; }
     .indicator-dot.green { background:#10b981; }
     .indicator-dot.yellow { background:#f59e0b; }
     .indicator-dot.red { background:#ef4444; }
 
     .va-setting { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .va-setting input { width:120px; padding:8px 14px; border:1px solid #334155; border-radius:30px; background:#1e293b; color:#f1f5f9; font-size:1rem; text-align:center; outline:none; }
+    .va-setting input { width:120px; padding:8px 14px; border:1px solid var(--border-input); border-radius:30px; background:var(--bg-input); color:var(--text-primary); font-size:1rem; text-align:center; outline:none; transition:background 0.3s, border 0.3s, color 0.3s; }
     .va-setting input:focus { border-color:#3b82f6; }
-    .va-setting label { font-size:0.85rem; color:#94a3b8; }
 
     /* ===== WATER LEVEL ===== */
-    .water-container { background:#1e293b; border-radius:16px; height:200px; position:relative; overflow:hidden; margin-bottom:12px; }
+    .water-container { background:var(--bg-water-container); border-radius:16px; height:200px; position:relative; overflow:hidden; margin-bottom:12px; transition:background 0.3s; }
     .water-fill { position:absolute; bottom:0; left:0; width:100%; background:linear-gradient(135deg,#0284c7,#0ea5e9); transition:height 0.4s ease; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:1.8rem; }
-    .threshold-bar { background:#1e293b; border-radius:12px; padding:10px 14px; margin-top:10px; position:relative; }
-    .threshold-labels { display:flex; justify-content:space-between; font-size:0.75rem; color:#94a3b8; }
-    .threshold-track { background:#334155; height:6px; border-radius:6px; margin-top:6px; position:relative; }
+    .threshold-bar { background:var(--bg-threshold); border-radius:12px; padding:10px 14px; margin-top:10px; position:relative; transition:background 0.3s; }
+    .threshold-labels { display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); }
+    .threshold-track { background:var(--border-input); height:6px; border-radius:6px; margin-top:6px; position:relative; }
     .threshold-marker { position:absolute; top:-4px; width:3px; height:14px; border-radius:2px; }
     .threshold-marker.low { background:#ef4444; }
     .threshold-marker.high { background:#10b981; }
 
     /* ===== PUMP ===== */
-    .pump-control { background:#1e293b; border-radius:14px; padding:14px; text-align:center; }
+    .pump-control { background:var(--bg-pump); border-radius:14px; padding:14px; text-align:center; transition:background 0.3s; }
     .pump-badge { display:inline-block; padding:4px 14px; border-radius:30px; font-weight:600; font-size:0.8rem; }
     .pump-badge.on { background:#10b981; color:#fff; }
     .pump-badge.off { background:#ef4444; color:#fff; }
     .pump-badge.auto { background:#8b5cf6; color:#fff; }
 
     /* ===== RFID ===== */
-    .rfid-box { background:#1e293b; border-radius:14px; padding:14px 18px; }
-    .rfid-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #334155; }
+    .rfid-box { background:var(--bg-rfid); border-radius:14px; padding:14px 18px; transition:background 0.3s; }
+    .rfid-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-input); }
     .rfid-row:last-child { border-bottom:none; }
-    .rfid-label { color:#94a3b8; font-size:0.85rem; }
+    .rfid-label { color:var(--text-muted); font-size:0.85rem; }
     .rfid-value { color:#fbbf24; font-family:monospace; font-weight:600; }
 
     /* ===== HISTORY ===== */
-    .history-box { max-height:200px; overflow-y:auto; background:#1e293b; border-radius:14px; padding:8px; }
+    .history-box { max-height:200px; overflow-y:auto; background:var(--bg-history); border-radius:14px; padding:8px; transition:background 0.3s; }
     .history-box::-webkit-scrollbar { width:4px; }
     .history-box::-webkit-scrollbar-track { background:transparent; }
-    .history-box::-webkit-scrollbar-thumb { background:#475569; border-radius:4px; }
-    .history-item { background:rgba(255,255,255,0.04); padding:8px 14px; margin:4px 0; border-radius:10px; display:flex; justify-content:space-between; font-size:0.85rem; border-left:3px solid #2563eb; }
-    .history-item .uid { font-family:monospace; font-weight:600; }
-    .history-item .time { color:#94a3b8; font-size:0.75rem; }
+    .history-box::-webkit-scrollbar-thumb { background:var(--text-muted); border-radius:4px; }
+    .history-item { background:var(--bg-card); padding:8px 14px; margin:4px 0; border-radius:10px; display:flex; justify-content:space-between; font-size:0.85rem; border-left:3px solid #2563eb; transition:background 0.3s; }
+    .history-item .uid { font-family:monospace; font-weight:600; color:var(--text-primary); }
+    .history-item .time { color:var(--text-muted); font-size:0.75rem; }
 
     /* ===== WATERING ===== */
-    .watering-card { background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); }
+    .watering-card { background:var(--bg-watering); border:1px solid var(--border-watering); transition:background 0.3s, border 0.3s; }
     .watering-status-badge { font-size:1.1rem; padding:4px 16px; border-radius:30px; font-weight:600; }
     .watering-status-badge.on { background:#10b981; color:#fff; }
     .watering-status-badge.off { background:#ef4444; color:#fff; }
@@ -132,27 +192,28 @@
 
     /* ===== CALIBRATION ===== */
     .cal-group { margin-bottom:14px; }
-    .cal-group label { display:block; font-weight:500; font-size:0.8rem; color:#94a3b8; margin-bottom:4px; }
-    .cal-group input { width:100%; padding:8px 14px; border:1px solid #334155; border-radius:10px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; }
+    .cal-group label { display:block; font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px; }
+    .cal-group input { width:100%; padding:8px 14px; border:1px solid var(--border-input); border-radius:10px; background:var(--bg-input); color:var(--text-primary); font-size:0.9rem; outline:none; transition:background 0.3s, border 0.3s, color 0.3s; }
     .cal-group input:focus { border-color:#3b82f6; }
-    .cal-group input[type="range"] { width:100%; height:4px; -webkit-appearance:none; background:#334155; border-radius:4px; outline:none; padding:0; }
+    .cal-group input[type="range"] { width:100%; height:4px; -webkit-appearance:none; background:var(--border-input); border-radius:4px; outline:none; padding:0; }
     .cal-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#3b82f6; cursor:pointer; box-shadow:0 0 12px rgba(59,130,246,0.3); }
-    .range-labels { display:flex; justify-content:space-between; font-size:0.7rem; color:#64748b; margin-top:2px; }
+    .range-labels { display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
     .cal-msg { text-align:center; font-size:0.85rem; margin-top:10px; min-height:24px; }
     .cal-msg.success { color:#10b981; }
     .cal-msg.error { color:#ef4444; }
 
     /* ===== CHART ===== */
     .chart-container { height:250px; width:100%; margin-top:8px; }
+    .chart-container canvas { background:transparent !important; }
 
     /* ===== INPUT GROUP ===== */
     .input-group { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-    .input-field { flex:2; padding:10px 16px; border:1px solid #334155; border-radius:30px; background:#1e293b; color:#f1f5f9; font-size:0.9rem; outline:none; min-width:140px; }
+    .input-field { flex:2; padding:10px 16px; border:1px solid var(--border-input); border-radius:30px; background:var(--bg-input); color:var(--text-primary); font-size:0.9rem; outline:none; min-width:140px; transition:background 0.3s, border 0.3s, color 0.3s; }
     .input-field:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
-    .input-field::placeholder { color:#64748b; }
+    .input-field::placeholder { color:var(--text-muted); }
 
     /* ===== FOOTER ===== */
-    .footer { text-align:center; margin-top:32px; color:#475569; font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.04); padding-top:20px; }
+    .footer { text-align:center; margin-top:32px; color:var(--text-muted); font-size:0.8rem; border-top:1px solid var(--border-card); padding-top:20px; transition:color 0.3s, border 0.3s; }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width:1024px) { .grid-4 { grid-template-columns:repeat(2,1fr); } }
@@ -162,6 +223,7 @@
       .sensor-grid { grid-template-columns:1fr 1fr; }
       .indicator-grid { grid-template-columns:1fr; }
       .header { flex-direction:column; align-items:stretch; text-align:center; }
+      .header-right { justify-content:center; }
     }
   </style>
 </head>
@@ -170,8 +232,17 @@
 
   <!-- HEADER -->
   <header class="header">
-    <div class="header-left"><h1>⚡<span>Smart</span>IoT</h1><span class="badge-esp">v3.0</span></div>
-    <div class="conn-status" id="connStatus"><span class="dot"></span> Menghubungkan...</div>
+    <div class="header-left">
+      <h1>⚡<span>Smart</span>IoT</h1>
+      <span class="badge-esp">v3.0</span>
+    </div>
+    <div class="header-right">
+      <div class="conn-status" id="connStatus"><span class="dot"></span> Menghubungkan...</div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+        <span class="icon" id="themeIcon">🌙</span>
+        <span id="themeLabel">Gelap</span>
+      </button>
+    </div>
   </header>
 
   <!-- FILTER BAR -->
@@ -262,7 +333,7 @@
       <div class="indicator-item"><span>📊 Power Factor</span><span id="indPF"><span class="indicator-dot green"></span> Normal</span></div>
     </div>
 
-    <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:12px;" id="pzStatus">🟢 PZEM Connected</div>
+    <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:12px;" id="pzStatus">🟢 PZEM Connected</div>
   </div>
 
   <!-- ========== WATER LEVEL + CALIBRATION ========== -->
@@ -270,7 +341,7 @@
     <div class="card">
       <div class="card-title"><span class="icon">💧</span> Water Level</div>
       <div class="water-container"><div class="water-fill" id="waterFill" style="height:0%;"><span class="pct" id="waterPercent">0%</span></div></div>
-      <div id="waterAlert" style="text-align:center; font-weight:600; margin-bottom:10px; min-height:24px;">Menunggu data...</div>
+      <div id="waterAlert" style="text-align:center; font-weight:600; margin-bottom:10px; min-height:24px; color:var(--text-primary);">Menunggu data...</div>
       <div class="threshold-bar">
         <div class="threshold-labels"><span>🔻 LOW <span id="dispLow">30</span>%</span><span>🔺 HIGH <span id="dispHigh">80</span>%</span></div>
         <div class="threshold-track"><div class="threshold-marker low" id="lowMarker" style="left:30%;"></div><div class="threshold-marker high" id="highMarker" style="left:80%;"></div></div>
@@ -320,9 +391,9 @@
       <button class="btn" style="background:#8b5cf6; color:#fff;" onclick="wateringCmd('AUTO')">🤖 AUTO</button>
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
-      <div class="cal-group"><label>Threshold Kelembaban (%)</label><input type="number" id="waterThreshold" step="1" value="40"><div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Siram jika soil ≤ nilai ini</div></div>
-      <div class="cal-group"><label>Durasi Penyiraman (detik)</label><input type="number" id="waterDuration" step="1" value="5"><div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Lama pompa menyala</div></div>
-      <div class="cal-group"><label>Interval Minimal (detik)</label><input type="number" id="waterInterval" step="1" value="60"><div style="font-size:0.7rem; color:#64748b; margin-top:4px;">Tunggu antar penyiraman</div></div>
+      <div class="cal-group"><label>Threshold Kelembaban (%)</label><input type="number" id="waterThreshold" step="1" value="40"><div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Siram jika soil ≤ nilai ini</div></div>
+      <div class="cal-group"><label>Durasi Penyiraman (detik)</label><input type="number" id="waterDuration" step="1" value="5"><div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Lama pompa menyala</div></div>
+      <div class="cal-group"><label>Interval Minimal (detik)</label><input type="number" id="waterInterval" step="1" value="60"><div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">Tunggu antar penyiraman</div></div>
     </div>
     <button class="btn btn-water" onclick="sendWateringConfig()" style="margin-top:12px;">💾 Simpan Konfigurasi Penyiraman</button>
     <div id="wateringMsg" style="text-align:center; font-size:0.85rem; margin-top:8px; min-height:20px;"></div>
@@ -351,13 +422,42 @@
   <!-- ========== HISTORY ========== -->
   <div class="card" style="margin-bottom:24px;">
     <div class="card-title"><span class="icon">📜</span> Access History</div>
-    <div class="history-box" id="historyBox"><div style="text-align:center; color:#64748b; padding:20px;">Belum ada history</div></div>
+    <div class="history-box" id="historyBox"><div style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada history</div></div>
   </div>
 
   <footer class="footer">© 2025 Smart IoT Dashboard Pro · ESP32 + MQTT</footer>
 </div>
 
 <script>
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const themeLabel = document.getElementById('themeLabel');
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  if (theme === 'light') {
+    themeIcon.textContent = '☀️';
+    themeLabel.textContent = 'Terang';
+  } else {
+    themeIcon.textContent = '🌙';
+    themeLabel.textContent = 'Gelap';
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  setTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Load saved theme
+const savedTheme = localStorage.getItem('theme') || 'dark';
+setTheme(savedTheme);
+themeToggle.addEventListener('click', toggleTheme);
+
 // ============================================================
 // KONFIGURASI MQTT
 // ============================================================
@@ -460,7 +560,7 @@ function loadHistory(){ try{ const s=localStorage.getItem(HISTORY_STORAGE_KEY); 
 function saveHistory(h){ try{ localStorage.setItem(HISTORY_STORAGE_KEY,JSON.stringify(h)); }catch(e){} }
 function displayHistory(h){
   historyBox.innerHTML='';
-  if(!h||h.length===0){ historyBox.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Belum ada history</div>'; return; }
+  if(!h||h.length===0){ historyBox.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px;">Belum ada history</div>'; return; }
   h.forEach(item=>{ const d=document.createElement('div'); d.className='history-item'; d.innerHTML=`<span class="uid">📇 ${item.uid}</span><span class="time">⏱️ ${item.time}</span>`; historyBox.appendChild(d); });
 }
 function addHistoryItem(uid,time){ let h=loadHistory(); h.unshift({uid,time}); if(h.length>50) h=h.slice(0,50); saveHistory(h); displayHistory(h); }
@@ -529,7 +629,7 @@ function initCharts() {
       { label: 'Temp °C', data: [], borderColor: '#ef4444', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 },
       { label: 'Hum %', data: [], borderColor: '#3b82f6', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 }
     ]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } }, scales: { x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-secondary)', boxWidth: 12 } } }, scales: { x: { ticks: { color: 'var(--text-muted)', maxTicksLimit: 10 }, grid: { color: 'var(--border-card)' } }, y: { ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--border-card)' } } } }
   });
   chartWaterSoil = new Chart(document.getElementById('chartWaterSoil'), {
     type: 'line',
@@ -537,7 +637,7 @@ function initCharts() {
       { label: 'Water %', data: [], borderColor: '#0ea5e9', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 },
       { label: 'Soil %', data: [], borderColor: '#10b981', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 }
     ]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } }, scales: { x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-secondary)', boxWidth: 12 } } }, scales: { x: { ticks: { color: 'var(--text-muted)', maxTicksLimit: 10 }, grid: { color: 'var(--border-card)' } }, y: { ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--border-card)' } } } }
   });
   chartPower = new Chart(document.getElementById('chartPower'), {
     type: 'line',
@@ -546,7 +646,7 @@ function initCharts() {
       { label: 'Current (A)', data: [], borderColor: '#10b981', borderWidth: 2, fill: false, tension: 0.2, pointRadius: 1 },
       { label: 'Power (W)', data: [], borderColor: '#f59e0b', borderWidth: 2, fill: true, backgroundColor: 'rgba(245,158,11,0.08)', tension: 0.2, pointRadius: 1 }
     ]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } }, scales: { x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'var(--text-secondary)', boxWidth: 12 } } }, scales: { x: { ticks: { color: 'var(--text-muted)', maxTicksLimit: 10 }, grid: { color: 'var(--border-card)' } }, y: { ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--border-card)' } } } }
   });
 }
 
@@ -637,12 +737,10 @@ function applyVA() {
   if(isNaN(va) || va < 100) va = 900;
   houseVA = va;
   maxPower = va;
-  // maxCurrent akan diupdate di updatePowerUI berdasarkan tegangan real
-  document.querySelector('.va-setting label').innerHTML = `🏠 Kapasitas (VA): <strong>${va}</strong>`;
-  // update threshold jika ada data tegangan
   const v = parseFloat(pzV.textContent);
   if(!isNaN(v) && v > 0) updateThresholds(v);
   else updateThresholds(220);
+  document.querySelector('.va-setting label').innerHTML = `🏠 Kapasitas (VA): <strong>${va}</strong>`;
 }
 
 function updateThresholds(voltage) {
@@ -933,7 +1031,6 @@ function setupFilter() {
 // INIT
 // ============================================================
 window.onload = function() {
-  // Load history & init charts
   displayHistory(loadHistory());
   initCharts();
   applyVA();
