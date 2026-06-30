@@ -658,7 +658,7 @@ const formulaData = {
     title: 'Efficiency (η)',
     sub: 'Efisiensi daya dalam persen',
     formula: 'η = PF × 100%',
-    desc: '<strong>Keterangan:</strong><br>η = Efisiensi (%<br>PF = Power Factor<br><br>Semakin tinggi efisiensi, semakin baik pemanfaatan daya.'
+    desc: '<strong>Keterangan:</strong><br>η = Efisiensi (%)<br>PF = Power Factor<br><br>Semakin tinggi efisiensi, semakin baik pemanfaatan daya.'
   },
   frequency: {
     title: 'Frequency (f)',
@@ -740,10 +740,11 @@ const TOPICS = {
   wateringStatus:'esp32/watering/status'
 };
 const HISTORY_STORAGE_KEY = 'rfid_history';
+const GRAPH_STORAGE_KEY = 'iot_graph_data';
 let client = null, connected = false, currentFilterHours = 24;
 
 // ============================================================
-// DATA GRAFIK
+// DATA GRAFIK (DENGAN LOCALSTORAGE)
 // ============================================================
 let sensorData = { time:[], temp:[], hum:[], soil:[], water:[] };
 let powerData = { time:[], voltage:[], current:[], power:[] };
@@ -812,6 +813,31 @@ const wateringThresholdDisplay = document.getElementById('wateringThresholdDispl
 const wateringMsg = document.getElementById('wateringMsg');
 
 // ============================================================
+// STORAGE FUNCTIONS UNTUK GRAFIK
+// ============================================================
+function loadGraphData() {
+  try {
+    const raw = localStorage.getItem(GRAPH_STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.sensor && data.power) {
+        sensorData = data.sensor;
+        powerData = data.power;
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+
+function saveGraphData() {
+  try {
+    const data = { sensor: sensorData, power: powerData };
+    localStorage.setItem(GRAPH_STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+// ============================================================
 // HISTORY
 // ============================================================
 function loadHistory(){ try{ const s=localStorage.getItem(HISTORY_STORAGE_KEY); return s?JSON.parse(s):[]; }catch(e){ return []; } }
@@ -830,6 +856,7 @@ function setHistoryList(arr){ if(!arr||arr.length===0) return; const items=arr.m
 function applyFilter() {
   const now = Date.now();
   const cutoff = now - currentFilterHours * 3600 * 1000;
+  // Sensor
   let idx = 0;
   for(let i=0; i<sensorData.time.length; i++) {
     if(sensorData.time[i] >= cutoff) { idx = i; break; }
@@ -839,6 +866,7 @@ function applyFilter() {
   filteredSensor.hum = sensorData.hum.slice(idx);
   filteredSensor.soil = sensorData.soil.slice(idx);
   filteredSensor.water = sensorData.water.slice(idx);
+  // Power
   let idxP = 0;
   for(let i=0; i<powerData.time.length; i++) {
     if(powerData.time[i] >= cutoff) { idxP = i; break; }
@@ -861,6 +889,7 @@ function addSensorDataPoint(ts,t,h,s,w) {
     sensorData.time.shift(); sensorData.temp.shift(); sensorData.hum.shift();
     sensorData.soil.shift(); sensorData.water.shift();
   }
+  saveGraphData();
   applyFilter();
 }
 function addPowerDataPoint(ts,v,a,w) {
@@ -872,6 +901,7 @@ function addPowerDataPoint(ts,v,a,w) {
     powerData.time.shift(); powerData.voltage.shift();
     powerData.current.shift(); powerData.power.shift();
   }
+  saveGraphData();
   applyFilter();
 }
 
@@ -1298,7 +1328,16 @@ function setupFilter() {
 // INIT
 // ============================================================
 window.onload = function() {
+  // Muat history RFID dari localStorage
   displayHistory(loadHistory());
+
+  // Muat grafik dari localStorage
+  if (loadGraphData()) {
+    console.log('📊 Graph data loaded from localStorage');
+  } else {
+    console.log('📊 No graph data found in localStorage');
+  }
+
   initCharts();
   applyVA();
   setupFilter();
